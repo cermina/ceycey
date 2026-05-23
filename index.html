@@ -376,6 +376,20 @@
             </div>
 
             <div class="steps-header" data-translate="lbl_detailed_protocols">DETAILED PROTOCOLS BY TANK</div>
+
+            <!-- Dynamic Tank Filters Panel -->
+            <div class="protocol-filters-panel" style="animation: fadeUp 0.4s ease both;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                <span style="font-family: var(--mono); font-size: 0.7rem; color: var(--text2); font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;" data-translate="lbl_filter_tanks">FILTER CARGO TANKS</span>
+                <div style="display: flex; gap: 6px;">
+                  <button id="btn-filter-all" class="filter-mode-btn active" onclick="setFilterMode('all')" data-translate="btn_filter_all">ALL</button>
+                  <button id="btn-filter-selected" class="filter-mode-btn" onclick="setFilterMode('selected')" data-translate="btn_filter_selected">SELECTED</button>
+                  <button id="btn-filter-custom" class="filter-mode-btn" onclick="setFilterMode('custom')" data-translate="btn_filter_custom">CUSTOM</button>
+                </div>
+              </div>
+              <div id="filter-badges-wrap" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+            </div>
+
             <div id="tank-protocols-container" class="tank-protocols-container"></div>
           </div>
 

@@ -25,6 +25,8 @@ let vesselLayout = { rows: 9, cols: 'PS', preset: 'preset-18' };
 let adjacencyGraph = {}; // tankId -> list of adjacent tankIds
 let activeEditingTankId = null;
 let disclaimerAccepted = false;
+let filterMode = 'all'; // 'all', 'selected', 'custom'
+let filterCustomTanks = new Set();
 
 const DAILY_FREE_LIMIT = 1;
 const FREE_STEPS_SHOWN = 2;
@@ -162,7 +164,15 @@ const T = {
     step_prefix: 'STEP',
     lbl_engine_title: 'ASTRID DYNAMIC ENGINE v2.0 PRO',
     lbl_engine_desc: 'Active Database: 168,000+ Wash Combinations Mapped dynamically in <5ms. Next-Gen Topological Wash-Path Solver optimizes time, water, and fuel consumption.',
-    placeholder_search: 'Search cargo...'
+    placeholder_search: 'Search cargo...',
+    err_incomplete_last: 'Last Cargo is not specified.',
+    err_incomplete_next: 'Next Cargo is not specified.',
+    err_no_protocol: 'No cleaning protocol found in the database.',
+    err_db_procedure_missing: 'Procedure detail is missing from the database.',
+    lbl_filter_tanks: 'FILTER CARGO TANKS',
+    btn_filter_all: 'ALL',
+    btn_filter_selected: 'SELECTED',
+    btn_filter_custom: 'CUSTOM'
   },
   tr: {
     hero_tag: 'OTOMATİK TANK TEMİZLEME PROTOKOL SİSTEMİ',
@@ -240,7 +250,15 @@ const T = {
     step_prefix: 'ADIM',
     lbl_engine_title: 'ASTRID DİNAMİK MOTORU v2.0 PRO',
     lbl_engine_desc: 'Aktif Veritabanı: <5ms içinde 168.000\'den fazla Temizleme Kombinasyonu dinamik olarak çözülür. Yeni Nesil Topolojik Yıkama Yolu Çözücü zaman, su ve yakıtı optimize eder.',
-    placeholder_search: 'Yük ara...'
+    placeholder_search: 'Yük ara...',
+    err_incomplete_last: 'Son yük (Last Cargo) belirtilmemiş.',
+    err_incomplete_next: 'Sonraki yük (Next Cargo) belirtilmemiş.',
+    err_no_protocol: 'Veritabanında temizlik protokolü bulunamadı.',
+    err_db_procedure_missing: 'Prosedür detayları veritabanında eksik.',
+    lbl_filter_tanks: 'KARGO TANKLARINI FİLTRELE',
+    btn_filter_all: 'TÜMÜ',
+    btn_filter_selected: 'SEÇİLİ',
+    btn_filter_custom: 'ÖZEL'
   },
   es: {
     hero_tag: 'SISTEMA AUTOMÁTICO DE PROTOCOLOS DE LIMPIEZA DE TANQUES',
@@ -318,7 +336,15 @@ const T = {
     step_prefix: 'PASO',
     lbl_engine_title: 'MOTOR DINÁMICO ASTRID v2.0 PRO',
     lbl_engine_desc: 'Base de datos activa: Más de 168,000 combinaciones analizadas en <5ms. El resolvedor topológico de última generación optimiza tiempo, agua y combustible.',
-    placeholder_search: 'Buscar carga...'
+    placeholder_search: 'Buscar carga...',
+    err_incomplete_last: 'No se ha especificado la última carga.',
+    err_incomplete_next: 'No se ha especificado la siguiente carga.',
+    err_no_protocol: 'No se encontró ningún protocolo de limpieza en la base de datos.',
+    err_db_procedure_missing: 'Falta el detalle del procedimiento en la base de datos.',
+    lbl_filter_tanks: 'FILTRAR TANQUES DE CARGA',
+    btn_filter_all: 'TODOS',
+    btn_filter_selected: 'SELECCIONADO',
+    btn_filter_custom: 'PERSONALIZADO'
   },
   el: {
     hero_tag: 'ΑΥΤΟΜΑΤΟ ΣΥΣΤΗΜΑ ΠΡΩΤΟΚΟΛΛΩΝ ΚΑΘΑΡΙΣΜΟΥ ΔΕΞΑΜΕΝΩΝ',
@@ -396,7 +422,15 @@ const T = {
     step_prefix: 'ΒΗΜΑ',
     lbl_engine_title: 'ΔΥΝΑΜΙΚΗ ΜΗΧΑΝΗ ASTRID v2.0 PRO',
     lbl_engine_desc: 'Ενεργή βάση δεδομένων: 168.000+ συνδυασμοί αναλύονται σε <5ms. Ο επιλυτής τοπολογικής διαδρομής επόμενης γενιάς βελτιστοποιεί χρόνο, νερό και καύσιμο.',
-    placeholder_search: 'Αναζήτηση φορτίου...'
+    placeholder_search: 'Αναζήτηση φορτίου...',
+    err_incomplete_last: 'Δεν έχει καθοριστεί το προηγούμενο φορτίο.',
+    err_incomplete_next: 'Δεν έχει καθοριστεί το επόμενο φορτίο.',
+    err_no_protocol: 'Δεν βρέθηκε πρωτόκολλο καθαρισμού στη βάση δεδομένων.',
+    err_db_procedure_missing: 'Λείπουν οι λεπτομέρειες της διαδικασίας από τη βάση δεδομένων.',
+    lbl_filter_tanks: 'ΦΙΛΤΡΑΡΙΣΜΑ ΔΕΞΑΜΕΝΩΝ ΦΟΡΤΙΟΥ',
+    btn_filter_all: 'ΟΛΑ',
+    btn_filter_selected: 'ΕΠΙΛΕΓΜΕΝΟ',
+    btn_filter_custom: 'ΠΡΟΣΑΡΜΟΣΜΕΝΟ'
   },
   ru: {
     hero_tag: 'АВТОМАТИЧЕСКАЯ СИСТЕМА ПРОТОКОЛОВ ОЧИСТКИ ТАНКОВ',
@@ -474,7 +508,15 @@ const T = {
     step_prefix: 'ШАГ',
     lbl_engine_title: 'ДИНАМИЧЕСКИЙ ДВИЖОК ASTRID v2.0 PRO',
     lbl_engine_desc: 'Активная база данных: более 168 000 комбинаций анализируются менее чем за 5 мс. Топологический решатель оптимизирует время, воду и топливо.',
-    placeholder_search: 'Поиск груза...'
+    placeholder_search: 'Поиск груза...',
+    err_incomplete_last: 'Предыдущий груз не указан.',
+    err_incomplete_next: 'Следующий груз не указан.',
+    err_no_protocol: 'Протокол очистки не найден в базе данных.',
+    err_db_procedure_missing: 'Детали процедуры отсутствуют в базе данных.',
+    lbl_filter_tanks: 'ФИЛЬТР ГРУЗОВЫХ ТАНКОВ',
+    btn_filter_all: 'ВСЕ',
+    btn_filter_selected: 'ВЫБРАННЫЙ',
+    btn_filter_custom: 'ВЫБОР'
   },
   zh: {
     hero_tag: '自动洗舱协议系统',
@@ -552,7 +594,15 @@ const T = {
     step_prefix: '步骤',
     lbl_engine_title: 'ASTRID 动态引擎 v2.0 专业版',
     lbl_engine_desc: '活跃数据库: 在 <5 毫秒内动态匹配 168,000+ 种清洗组合。新一代拓扑清洗路径求解器优化时间、淡水与燃油消耗。',
-    placeholder_search: '搜索货物...'
+    placeholder_search: '搜索货物...',
+    err_incomplete_last: '未指定前度货物。',
+    err_incomplete_next: '未指定拟载货物。',
+    err_no_protocol: '数据库中未找到洗舱协议。',
+    err_db_procedure_missing: '数据库中缺少步骤详情。',
+    lbl_filter_tanks: '过滤货舱',
+    btn_filter_all: '全部',
+    btn_filter_selected: '已选',
+    btn_filter_custom: '自定义'
   }
 };
 
@@ -2007,6 +2057,141 @@ function parseWashSteps(instructions) {
   return result;
 }
 
+function appendTankErrorCard(id, tank, errorMsg) {
+  const container = document.getElementById('tank-protocols-container');
+  if (!container) return;
+  const card = document.createElement('div');
+  card.className = 'tank-protocol-card error-card';
+  card.setAttribute('data-tank-id', id);
+  card.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+  card.style.background = 'rgba(239, 68, 68, 0.03)';
+  
+  if (id === activeEditingTankId) {
+    card.style.borderColor = 'var(--accent)';
+    card.style.boxShadow = '0 0 12px var(--accent-glow)';
+  }
+  
+  const lastCargo = tank.lastCargoName || '—';
+  const nextCargo = tank.nextCargoName || '—';
+  
+  card.innerHTML = `
+    <div class="tank-prot-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+      <div class="tank-prot-meta">
+        <span class="tank-prot-tag" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">TANK ${id}</span>
+        <span class="tank-prot-cargo-seq" style="color: var(--text2); font-weight: 700;">${lastCargo} ➡️ ${nextCargo}</span>
+      </div>
+    </div>
+    <div class="safety-panel" style="padding: 16px; border: 1px solid rgba(239, 68, 68, 0.25); background: rgba(239, 68, 68, 0.05); display: flex; align-items: center; gap: 12px; margin-top: 10px;">
+      <div class="safety-icon" style="font-size: 1.4rem; color: #ef4444;">⚠️</div>
+      <div class="safety-content">
+        <div class="safety-title" style="font-size: 0.65rem; color: #ef4444; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">WARNING / UYARI</div>
+        <p class="safety-text" style="font-size: 0.8rem; color: #f87171; margin: 4px 0 0 0; line-height: 1.4;">${errorMsg}</p>
+      </div>
+    </div>
+  `;
+  container.appendChild(card);
+}
+
+function setFilterMode(mode) {
+  filterMode = mode;
+  document.querySelectorAll('.filter-mode-btn').forEach(btn => btn.classList.remove('active'));
+  const activeBtn = document.getElementById('btn-filter-' + mode);
+  if (activeBtn) activeBtn.classList.add('active');
+  
+  if (mode === 'selected') {
+    if (activeEditingTankId) {
+      filterCustomTanks.clear();
+      filterCustomTanks.add(activeEditingTankId);
+    }
+  } else if (mode === 'all') {
+    filterCustomTanks.clear();
+  }
+  
+  applyProtocolFilters();
+}
+
+function toggleCustomFilterTank(id) {
+  if (filterMode !== 'custom') {
+    filterMode = 'custom';
+    document.querySelectorAll('.filter-mode-btn').forEach(btn => btn.classList.remove('active'));
+    const customBtn = document.getElementById('btn-filter-custom');
+    if (customBtn) customBtn.classList.add('active');
+    filterCustomTanks.clear();
+  }
+  
+  if (filterCustomTanks.has(id)) {
+    filterCustomTanks.delete(id);
+  } else {
+    filterCustomTanks.add(id);
+  }
+  
+  applyProtocolFilters();
+}
+
+function applyProtocolFilters() {
+  const cards = document.querySelectorAll('.tank-protocol-card');
+  cards.forEach(card => {
+    const tankId = card.getAttribute('data-tank-id');
+    let show = false;
+    
+    if (filterMode === 'all') {
+      show = true;
+    } else if (filterMode === 'selected') {
+      show = (tankId === activeEditingTankId);
+    } else if (filterMode === 'custom') {
+      show = filterCustomTanks.has(tankId);
+    }
+    
+    if (show) {
+      card.classList.remove('hidden');
+    } else {
+      card.classList.add('hidden');
+    }
+  });
+  
+  updateFilterBadgesUI();
+}
+
+function updateFilterBadgesUI() {
+  document.querySelectorAll('.filter-badge').forEach(badge => {
+    const id = badge.textContent.trim();
+    let isActive = false;
+    
+    if (filterMode === 'all') {
+      isActive = true;
+    } else if (filterMode === 'selected') {
+      isActive = (id === activeEditingTankId);
+    } else if (filterMode === 'custom') {
+      isActive = filterCustomTanks.has(id);
+    }
+    
+    if (isActive) {
+      badge.classList.add('active');
+    } else {
+      badge.classList.remove('active');
+    }
+  });
+}
+
+function renderFilterBadges() {
+  const wrap = document.getElementById('filter-badges-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  
+  const activeTankIds = Object.keys(vesselTanks).filter(id => {
+    const t = vesselTanks[id];
+    return t.lastCargoId || t.lastCargoName || t.nextCargoId || t.nextCargoName;
+  });
+  
+  activeTankIds.forEach(id => {
+    const badge = document.createElement('div');
+    badge.className = 'filter-badge';
+    badge.textContent = id;
+    badge.onclick = () => toggleCustomFilterTank(id);
+    wrap.appendChild(badge);
+  });
+}
+
 function calculateFleetProtocols() {
   if (!disclaimerAccepted) {
     showDisclaimerModal();
@@ -2045,14 +2230,39 @@ function calculateFleetProtocols() {
 
   tankIds.forEach(id => {
     const tank = vesselTanks[id];
-    if (!tank.lastCargoId || !tank.nextCargoId) return;
+    const hasLast = !!(tank.lastCargoId && tank.lastCargoName);
+    const hasNext = !!(tank.nextCargoId && tank.nextCargoName);
+    const isActive = hasLast || hasNext;
+    
+    if (!isActive) return;
+    
+    const tDict = T[lang] || T['en'];
+    
+    if (!hasLast) {
+      appendTankErrorCard(id, tank, tDict.err_incomplete_last || 'Last Cargo is not specified.');
+      totalTanksPlanned++;
+      return;
+    }
+    if (!hasNext) {
+      appendTankErrorCard(id, tank, tDict.err_incomplete_next || 'Next Cargo is not specified.');
+      totalTanksPlanned++;
+      return;
+    }
     
     const key = `${tank.lastCargoId}_${tank.nextCargoId}`;
     const protocolCode = matrixData[key];
-    if (!protocolCode || protocolCode === 'nan' || protocolCode === 'ATS-PROT-nan') return;
+    if (!protocolCode || protocolCode === 'nan' || protocolCode === 'ATS-PROT-nan') {
+      appendTankErrorCard(id, tank, tDict.err_no_protocol || 'No cleaning protocol found in the database.');
+      totalTanksPlanned++;
+      return;
+    }
     
     let proc = proceduresData[protocolCode];
-    if (!proc) return;
+    if (!proc) {
+      appendTankErrorCard(id, tank, (tDict.err_db_procedure_missing || 'Procedure detail is missing.') + ` (${protocolCode})`);
+      totalTanksPlanned++;
+      return;
+    }
     
     let isMasked = false;
     if (isDemoUser) {
@@ -2207,6 +2417,9 @@ function calculateFleetProtocols() {
   if (elPrintVesselName) elPrintVesselName.textContent = vName.toUpperCase();
   const elPrintVesselMeta = document.getElementById('print-vessel-meta');
   if (elPrintVesselMeta) elPrintVesselMeta.textContent = `IMO ${vImo} | Chief Officer: ${vOff}`;
+  
+  renderFilterBadges();
+  applyProtocolFilters();
   
   switchDashboardTab('tab-eco');
 }
@@ -2647,6 +2860,11 @@ function appendTankProtocolCard(id, tank, proc, code, parsed, waterVol, fuelMT, 
   if (!container) return;
   const card = document.createElement('div');
   card.className = 'tank-protocol-card';
+  card.setAttribute('data-tank-id', id);
+  if (id === activeEditingTankId) {
+    card.style.borderColor = 'var(--accent)';
+    card.style.boxShadow = '0 0 12px var(--accent-glow)';
+  }
   
   const title = translateProcedureTitle(proc, lang);
   const rawInstructions = proc.instructions;
@@ -2988,6 +3206,10 @@ function switchDashboardTab(tabId) {
   
   const btn = document.getElementById('btn-' + tabId);
   if (btn) btn.classList.add('active');
+
+  if (tabId === 'tab-eco') {
+    applyProtocolFilters();
+  }
 
   // Reset scroll position of the panel contents to top
   const tabContents = document.querySelector('.tab-contents');

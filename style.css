@@ -1956,3 +1956,93 @@ body.light-mode ::-webkit-scrollbar-thumb:hover {
     box-shadow: 0 0 10px var(--green);
   }
 }
+
+/* Premium Tank Filtering Panel */
+.protocol-filters-panel {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius2);
+  padding: 15px;
+  margin-bottom: 20px;
+  backdrop-filter: blur(10px);
+}
+
+.filter-mode-btn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border2);
+  padding: 5px 12px;
+  border-radius: 4px;
+  color: var(--text3);
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+}
+
+.filter-mode-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.filter-mode-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+.filter-badge {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border2);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.filter-badge:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.filter-badge.active {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+  color: var(--accent);
+  text-shadow: 0 0 2px var(--accent-glow);
+}
+
+/* Light mode overrides for filters */
+body.light-mode .protocol-filters-panel {
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(100, 116, 139, 0.15);
+}
+body.light-mode .filter-mode-btn {
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(100, 116, 139, 0.15);
+  color: #475569;
+}
+body.light-mode .filter-mode-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+body.light-mode .filter-badge {
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(100, 116, 139, 0.15);
+  color: #475569;
+}
+body.light-mode .filter-badge.active {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+  color: var(--accent);
+}
