@@ -2112,51 +2112,130 @@ function resolveMatrixProtocol(lastId, nextId) {
   return null;
 }
 
-function generateSafetyHeroDetails(category, safetyNote) {
+function getCargoMarpolCategory(cargoId) {
+  if (!cargoId || !namesData[cargoId]) return null;
+  const rec = namesData[cargoId];
+  
+  const searchStr = [
+    rec.name || '',
+    rec.display || '',
+    rec.alt || '',
+    ...(rec.synonyms || [])
+  ].join(' ').toUpperCase();
+  
+  if (/\bANNEX\s*I\b|MARPOL\s*:\s*A1|\bFUELOIL\b|\bDIESEL\b|\bGASOIL\b|\bCRUDE\b|\bAVTUR\b|\bJET\b|\bIFO\b|\bMFO\b/.test(searchStr)) {
+    return 'Annex I';
+  }
+  
+  const catX = searchStr.includes('MARPOL: X') || /\bCAT\s*X\b|\bCATEGORY\s*X\b/.test(searchStr);
+  if (catX) return 'Annex II Cat X';
+  
+  const catY = searchStr.includes('MARPOL: Y') || /\bCAT\s*Y\b|\bCATEGORY\s*Y\b/.test(searchStr);
+  if (catY) return 'Annex II Cat Y';
+  
+  const catZ = searchStr.includes('MARPOL: Z') || /\bCAT\s*Z\b|\bCATEGORY\s*Z\b/.test(searchStr);
+  if (catZ) return 'Annex II Cat Z';
+
+  const catOS = searchStr.includes('MARPOL: OS') || /\bCAT\s*OS\b|\bCATEGORY\s*OS\b|\bOTHER\s*SUBSTANCES\b/.test(searchStr);
+  if (catOS) return 'Annex II Cat OS';
+  
+  if (/ACID|AMINE|ALCOHOL|KETONE|CHEMICAL/.test(searchStr)) {
+    return 'Annex II Cat Y';
+  }
+  
+  return 'Annex II Cat Z';
+}
+
+function generateSafetyHeroDetails(category, safetyNote, lastCargoId) {
   const noteUpper = (safetyNote || '').toUpperCase();
   let ppeText = '';
   let isgottText = '';
   let marpolText = '';
   
+  let ppeStandards = [];
+  let isgottStandards = [];
+  let marpolStandards = [];
+
+  const isHighPpe = category === 'SLV' || category === 'CHM' || noteUpper.includes('PPE') || noteUpper.includes('KKD') || noteUpper.includes('SUIT') || noteUpper.includes('ELBİSE') || noteUpper.includes('INTENSIVE') || noteUpper.includes('YOĞUN');
+  const isHighIsgott = category === 'SLV' || noteUpper.includes('LEL') || noteUpper.includes('FLAMMABLE') || noteUpper.includes('FIRE') || noteUpper.includes('YANGIN') || noteUpper.includes('GAS-FREE') || noteUpper.includes('GAZ-SERBEST');
+  
+  const marpolCat = getCargoMarpolCategory(lastCargoId);
+
   if (lang === 'tr') {
-    if (category === 'SLV' || category === 'CHM' || noteUpper.includes('PPE') || noteUpper.includes('KKD') || noteUpper.includes('SUIT') || noteUpper.includes('ELBİSE') || noteUpper.includes('INTENSIVE') || noteUpper.includes('YOĞUN')) {
+    // PPE
+    if (isHighPpe) {
       ppeText = '🛡️ <strong>Tam Kimyasal Koruma:</strong> Solunum maskesi, kimyasal dayanıklı tulum/elbise, gözlük, koruyucu eldiven ve antistatik çizme zorunludur.';
+      ppeStandards = ['EN 14605 (Tip 3)', 'EN ISO 374-1', 'EN 1149-5', 'EN 136 (Tip 3)'];
     } else {
       ppeText = '🛡️ <strong>Standart Koruma:</strong> Baret, koruyucu gözlük, iş eldiveni ve çelik burunlu emniyet ayakkabısı yeterlidir.';
+      ppeStandards = ['EN ISO 13688', 'EN 388', 'EN ISO 20345'];
     }
     
-    if (category === 'SLV' || noteUpper.includes('LEL') || noteUpper.includes('FLAMMABLE') || noteUpper.includes('FIRE') || noteUpper.includes('YANGIN') || noteUpper.includes('GAS-FREE') || noteUpper.includes('GAZ-SERBEST')) {
+    // ISGOTT
+    if (isHighIsgott) {
       isgottText = '⚓ <strong>Yangın ve Gaz Alarmı:</strong> Parlama tehlikesi! Kapalı mahale girmeden önce LEL &lt;%1 ve O2 &gt;%20 olmalı, tüm ekipmanlar topraklanmalı ve ex-proof kullanılmalıdır.';
+      isgottStandards = ['ISGOTT Bölüm 10.4', 'ISGOTT Bölüm 3', 'LEL <%1', 'O2 >%20'];
     } else {
       isgottText = '⚓ <strong>Mahal Giriş Kontrolü:</strong> Standart kapalı mahal giriş kontrol listesi, mahal havalandırması ve atmosfer ölçümü yapılmalıdır.';
+      isgottStandards = ['ISGOTT Bölüm 10.1', 'ISGOTT Bölüm 10.3'];
     }
     
-    if (category === 'SLV' || category === 'CHM' || noteUpper.includes('RECEPTION') || noteUpper.includes('SLOP') || noteUpper.includes('DISPOSAL') || noteUpper.includes('BERTARAF')) {
-      marpolText = '🌊 <strong>Deşarj Kısıtlaması (Ek-2):</strong> Yıkama suları kesinlikle denize basılamaz; slop tankına veya liman atık kabul tesisine stripping yapılmalıdır.';
-    } else {
-      marpolText = '🌊 <strong>Açık Deniz Deşarjı:</strong> MARPOL kurallarına göre en yakın karadan 12 mil açıkta, belirlenmiş minimum hızda denize deşarj edilebilir.';
+    // MARPOL
+    if (marpolCat === 'Annex I') {
+      marpolText = '🌊 <strong>MARPOL Ek-1 Uyum (Petrol/Oils):</strong> Petrol sınıfı yük yıkama suları deşarjı Ek-1 kurallarına tabidir. Yıkama suları slop tankında toplanmalı, sadece onaylı ODME (Yağ Deşarj İzleme) sistemi kontrolünde, 15 ppm sınırına uyularak ve en yakın karadan 50 mil açıkta tahliye edilebilir.';
+      marpolStandards = ['MARPOL Ek-1', 'ODME İzleme', '15 ppm Sınırı'];
+    } else if (marpolCat === 'Annex II Cat X') {
+      marpolText = '🌊 <strong>MARPOL Ek-2 Kategori X (Yüksek Tehlike):</strong> Yüksek derecede zehirli madde. Tahliye limanında zorunlu prewash (ön yıkama) yapılmalı ve tüm yıkama suları karadaki atık alım tesisine (reception facility) basılmalıdır. Denize deşarj kesinlikle yasaktır.';
+      marpolStandards = ['MARPOL Ek-2 Kural 13.6', 'Kategori X', 'Atık Kabul Tesisi'];
+    } else if (marpolCat === 'Annex II Cat Y') {
+      marpolText = '🌊 <strong>MARPOL Ek-2 Kategori Y (Orta Tehlike):</strong> Orta derecede zararlı madde. Tahliye limanında ön yıkama gerekebilir. Slop tankına stripping yapılmalıdır. Deniz deşarjı sadece karadan 12 mil açıkta, en az 25m derinlikte ve minimum 7 knot hızla giderken onaylı su altı deşarj nozulu ile yapılabilir.';
+      marpolStandards = ['MARPOL Ek-2 Kural 13.2', 'Kategori Y', '12 Mil / 7 Knot'];
+    } else if (marpolCat === 'Annex II Cat OS') {
+      marpolText = '🌊 <strong>MARPOL Ek-2 Kategori OS (Zararsız):</strong> Çevreye zararsız sınıf yük. Özel bir deşarj kısıtlaması yoktur, standart marpol kurallarına göre açık denizde denize tahliyesi yapılabilir.';
+      marpolStandards = ['MARPOL Ek-2', 'Kategori OS', 'Genel Deşarj'];
+    } else { // Annex II Cat Z or default
+      marpolText = '🌊 <strong>MARPOL Ek-2 Kategori Z (Düşük Tehlike):</strong> Düşük derecede zararlı madde. Kalıntılar slop tankına alınmalıdır. Karadan 12 mil açıkta, en az 25m su derinliğinde ve en az 7 knot gemi hızında denize deşarjına izin verilir.';
+      marpolStandards = ['MARPOL Ek-2 Kural 13.2', 'Kategori Z', '12 Mil / 7 Knot'];
     }
   } else {
-    if (category === 'SLV' || category === 'CHM' || noteUpper.includes('PPE') || noteUpper.includes('SUIT') || noteUpper.includes('INTENSIVE')) {
+    // PPE
+    if (isHighPpe) {
       ppeText = '🛡️ <strong>Heavy Chem Protection:</strong> Full chemical suit, breathing apparatus, chemical-resistant gloves, goggles, and anti-static boots mandatory.';
+      ppeStandards = ['EN 14605 (Type 3)', 'EN ISO 374-1', 'EN 1149-5', 'EN 136 (Type 3)'];
     } else {
       ppeText = '🛡️ <strong>Standard Deck PPE:</strong> Hard hat, protective safety glasses, work gloves, and steel-toe safety shoes.';
+      ppeStandards = ['EN ISO 13688', 'EN 388', 'EN ISO 20345'];
     }
     
-    if (category === 'SLV' || noteUpper.includes('LEL') || noteUpper.includes('FLAMMABLE') || noteUpper.includes('FIRE') || noteUpper.includes('GAS-FREE')) {
+    // ISGOTT
+    if (isHighIsgott) {
       isgottText = '⚓ <strong>Critical Gas/Fire Hazard:</strong> Flammable vapors! Confirm LEL &lt;1% and O2 &gt;20.8% before entry. Ensure tank grounding and ex-proof equipment only.';
+      isgottStandards = ['ISGOTT Ch 10.4', 'ISGOTT Chapter 3', 'LEL <1%', 'O2 >20.8%'];
     } else {
       isgottText = '⚓ <strong>Enclosed Space Entry:</strong> Standard hot work/entry permit checklist and continuous mechanical ventilation mandatory.';
+      isgottStandards = ['ISGOTT Ch 10.1', 'ISGOTT Ch 10.3'];
     }
     
-    if (category === 'SLV' || category === 'CHM' || noteUpper.includes('RECEPTION') || noteUpper.includes('SLOP') || noteUpper.includes('DISPOSAL')) {
-      marpolText = '🌊 <strong>Discharge Restriction (Annex II):</strong> Contains solvent or chemical residue. Discharge to sea strictly prohibited. Must strip to slop or shore reception.';
-    } else {
-      marpolText = '🌊 <strong>Open Sea Discharge:</strong> Wash water may be discharged to sea at least 12 NM from nearest land, subject to MARPOL Annex II guidelines.';
+    // MARPOL
+    if (marpolCat === 'Annex I') {
+      marpolText = '🌊 <strong>MARPOL Annex I (Petroleum/Oils):</strong> Petroleum-class cargo wash water is subject to Annex I rules. Residues must be routed to slop tank; discharge permitted only via approved ODME control, below 15 ppm limits, and >50 NM from nearest land.';
+      marpolStandards = ['MARPOL Annex I', 'ODME Monitoring', '15 ppm Limit'];
+    } else if (marpolCat === 'Annex II Cat X') {
+      marpolText = '🌊 <strong>MARPOL Annex II Cat X (High Hazard):</strong> Highly noxious substance. Mandatory prewash must be performed at discharge port, and all residues transferred to shore reception facility. Sea discharge strictly prohibited.';
+      marpolStandards = ['MARPOL Annex II Reg 13.6', 'Category X', 'Reception Facility'];
+    } else if (marpolCat === 'Annex II Cat Y') {
+      marpolText = '🌊 <strong>MARPOL Annex II Cat Y (Moderate Hazard):</strong> Moderate pollution hazard. Discharge port prewash may be required. Strip residues to slop. Sea discharge allowed only >12 NM from land, depth >25m, minimum speed 7 knots, via underwater outlet.';
+      marpolStandards = ['MARPOL Annex II Reg 13.2', 'Category Y', '12 NM / 7 Knots'];
+    } else if (marpolCat === 'Annex II Cat OS') {
+      marpolText = '🌊 <strong>MARPOL Annex II Cat OS (Non-Noxious):</strong> Cargo belongs to other substances. No specific chemical discharge restriction; standard open sea discharge rules apply.';
+      marpolStandards = ['MARPOL Annex II', 'Category OS', 'General Discharge'];
+    } else { // Annex II Cat Z or default
+      marpolText = '🌊 <strong>MARPOL Annex II Cat Z (Minor Hazard):</strong> Minor pollution hazard. Residues must be stripped to slop tank. Discharge to sea allowed outside 12 NM, minimum speed 7 knots, water depth >25m.';
+      marpolStandards = ['MARPOL Annex II Reg 13.2', 'Category Z', '12 NM / 7 Knots'];
     }
   }
   
-  return { ppeText, isgottText, marpolText };
+  return { ppeText, isgottText, marpolText, ppeStandards, isgottStandards, marpolStandards };
 }
 
 
@@ -3038,24 +3117,37 @@ function appendTankProtocolCard(id, tank, proc, code, parsed, waterVol, fuelMT, 
     }
   }
 
-  const safetyDetails = generateSafetyHeroDetails(proc.category || '', safety);
+  const safetyDetails = generateSafetyHeroDetails(proc.category || '', safety, tank.lastCargoId);
   const ppeTitle = lang === 'tr' ? '🛡️ KKD UYUMLULUĞU' : '🛡️ PPE COMPLIANCE';
   const isgottTitle = lang === 'tr' ? '⚓ ISGOTT GÜVENLİĞİ' : '⚓ ISGOTT SAFETY';
   const marpolTitle = lang === 'tr' ? '🌊 MARPOL ÇEVRE' : '🌊 MARPOL ENVIRONMENT';
 
+  const ppePills = (safetyDetails.ppeStandards || []).map(s => `<span class="standard-pill">${s}</span>`).join('');
+  const isgottPills = (safetyDetails.isgottStandards || []).map(s => `<span class="standard-pill">${s}</span>`).join('');
+  const marpolPills = (safetyDetails.marpolStandards || []).map(s => `<span class="standard-pill">${s}</span>`).join('');
+
   const safetyHeroCardsHtml = `
     <div class="safety-hero-cards" style="margin-top: 16px;">
       <div class="hero-card kkd-card">
-        <div class="hero-card-title">${ppeTitle}</div>
-        <div class="hero-card-content">${safetyDetails.ppeText}</div>
+        <div>
+          <div class="hero-card-title">${ppeTitle}</div>
+          <div class="hero-card-content">${safetyDetails.ppeText}</div>
+        </div>
+        <div class="hero-card-standards">${ppePills}</div>
       </div>
       <div class="hero-card isgott-card">
-        <div class="hero-card-title">${isgottTitle}</div>
-        <div class="hero-card-content">${safetyDetails.isgottText}</div>
+        <div>
+          <div class="hero-card-title">${isgottTitle}</div>
+          <div class="hero-card-content">${safetyDetails.isgottText}</div>
+        </div>
+        <div class="hero-card-standards">${isgottPills}</div>
       </div>
       <div class="hero-card marpol-card">
-        <div class="hero-card-title">${marpolTitle}</div>
-        <div class="hero-card-content">${safetyDetails.marpolText}</div>
+        <div>
+          <div class="hero-card-title">${marpolTitle}</div>
+          <div class="hero-card-content">${safetyDetails.marpolText}</div>
+        </div>
+        <div class="hero-card-standards">${marpolPills}</div>
       </div>
     </div>
   `;
