@@ -172,7 +172,9 @@ const T = {
     lbl_filter_tanks: 'FILTER CARGO TANKS',
     btn_filter_all: 'ALL',
     btn_filter_selected: 'SELECTED',
-    btn_filter_custom: 'CUSTOM'
+    btn_filter_custom: 'CUSTOM',
+    lbl_fallback_badge: '⚠️ SIMILAR CARGO REFERENCE',
+    lbl_derived_from: 'Derived from'
   },
   tr: {
     hero_tag: 'OTOMATİK TANK TEMİZLEME PROTOKOL SİSTEMİ',
@@ -258,7 +260,9 @@ const T = {
     lbl_filter_tanks: 'KARGO TANKLARINI FİLTRELE',
     btn_filter_all: 'TÜMÜ',
     btn_filter_selected: 'SEÇİLİ',
-    btn_filter_custom: 'ÖZEL'
+    btn_filter_custom: 'ÖZEL',
+    lbl_fallback_badge: '⚠️ BENZER GRUP REFERANSI',
+    lbl_derived_from: 'referansından türetilmiştir'
   },
   es: {
     hero_tag: 'SISTEMA AUTOMÁTICO DE PROTOCOLOS DE LIMPIEZA DE TANQUES',
@@ -344,7 +348,9 @@ const T = {
     lbl_filter_tanks: 'FILTRAR TANQUES DE CARGA',
     btn_filter_all: 'TODOS',
     btn_filter_selected: 'SELECCIONADO',
-    btn_filter_custom: 'PERSONALIZADO'
+    btn_filter_custom: 'PERSONALIZADO',
+    lbl_fallback_badge: '⚠️ REFERENCIA DE CARGA SIMILAR',
+    lbl_derived_from: 'Derivado de'
   },
   el: {
     hero_tag: 'ΑΥΤΟΜΑΤΟ ΣΥΣΤΗΜΑ ΠΡΩΤΟΚΟΛΛΩΝ ΚΑΘΑΡΙΣΜΟΥ ΔΕΞΑΜΕΝΩΝ',
@@ -430,7 +436,9 @@ const T = {
     lbl_filter_tanks: 'ΦΙΛΤΡΑΡΙΣΜΑ ΔΕΞΑΜΕΝΩΝ ΦΟΡΤΙΟΥ',
     btn_filter_all: 'ΟΛΑ',
     btn_filter_selected: 'ΕΠΙΛΕΓΜΕΝΟ',
-    btn_filter_custom: 'ΠΡΟΣΑΡΜΟΣΜΕΝΟ'
+    btn_filter_custom: 'ΠΡΟΣΑΡΜΟΣΜΕΝΟ',
+    lbl_fallback_badge: '⚠️ ΑΝΑΦΟΡΑ ΠΑΡΟΜΟΙΟΥ ΦΟΡΤΙΟΥ',
+    lbl_derived_from: 'Προέρχεται από'
   },
   ru: {
     hero_tag: 'АВТОМАТИЧЕСКАЯ СИСТЕМА ПРОТОКОЛОВ ОЧИСТКИ ТАНКОВ',
@@ -516,7 +524,9 @@ const T = {
     lbl_filter_tanks: 'ФИЛЬТР ГРУЗОВЫХ ТАНКОВ',
     btn_filter_all: 'ВСЕ',
     btn_filter_selected: 'ВЫБРАННЫЙ',
-    btn_filter_custom: 'ВЫБОР'
+    btn_filter_custom: 'ВЫБОР',
+    lbl_fallback_badge: '⚠️ ПОДОБНЫЙ КЛАСС ГРУЗА',
+    lbl_derived_from: 'Получено из'
   },
   zh: {
     hero_tag: '自动洗舱协议系统',
@@ -602,7 +612,9 @@ const T = {
     lbl_filter_tanks: '过滤货舱',
     btn_filter_all: '全部',
     btn_filter_selected: '已选',
-    btn_filter_custom: '自定义'
+    btn_filter_custom: '自定义',
+    lbl_fallback_badge: '⚠️ 类似货物参考',
+    lbl_derived_from: '衍生自'
   }
 };
 
@@ -2057,6 +2069,97 @@ function parseWashSteps(instructions) {
   return result;
 }
 
+function resolveMatrixProtocol(lastId, nextId) {
+  const directKey = `${lastId}_${nextId}`;
+  let code = matrixData[directKey];
+  if (code && code !== 'nan' && code !== 'ATS-PROT-nan') {
+    return { code, isFallback: false, fallbackSourceId: null };
+  }
+  
+  const lastCargo = namesData[lastId];
+  if (!lastCargo) return null;
+  
+  const lastText = [
+    lastCargo.name || '',
+    lastCargo.display || '',
+    lastCargo.alt || '',
+    ...(lastCargo.synonyms || [])
+  ].join(' ').toUpperCase();
+  
+  let siblings = [];
+  
+  if (/FUELOIL|FUEL OIL|DIESEL|AVTUR|JET|GASOIL|ULS|IFO|MFO|CRUDE/.test(lastText)) {
+    siblings = ['165', '359', '22', '83', '414', '170']; 
+  } else if (/ACID|ACETIC|FORMIC|SULPHURIC|PHOSPHORIC|ACRYLIC/.test(lastText)) {
+    siblings = ['1', '7', '40', '160']; 
+  } else if (/AMINE|AMINO|EDA|DETA|AEEA|AMMONIA|MORPHOLINE/.test(lastText)) {
+    siblings = ['15', '138', '96', '180'];
+  } else if (/ALCOHOL|METHANOL|ETHANOL|GLYCOL|PROPANOL|BUTANOL|DECANOL/.test(lastText)) {
+    siblings = ['122', '141', '73', '18'];
+  } else if (/ACETONE|KETONE|MEK|DAA/.test(lastText)) {
+    siblings = ['3', '76', '100'];
+  }
+  
+  for (let sibId of siblings) {
+    if (sibId === lastId) continue;
+    const sibKey = `${sibId}_${nextId}`;
+    const sibCode = matrixData[sibKey];
+    if (sibCode && sibCode !== 'nan' && sibCode !== 'ATS-PROT-nan') {
+      return { code: sibCode, isFallback: true, fallbackSourceId: sibId };
+    }
+  }
+  
+  return null;
+}
+
+function generateSafetyHeroDetails(category, safetyNote) {
+  const noteUpper = (safetyNote || '').toUpperCase();
+  let ppeText = '';
+  let isgottText = '';
+  let marpolText = '';
+  
+  if (lang === 'tr') {
+    if (category === 'SLV' || category === 'CHM' || noteUpper.includes('PPE') || noteUpper.includes('KKD') || noteUpper.includes('SUIT') || noteUpper.includes('ELBİSE') || noteUpper.includes('INTENSIVE') || noteUpper.includes('YOĞUN')) {
+      ppeText = '🛡️ <strong>Tam Kimyasal Koruma:</strong> Solunum maskesi, kimyasal dayanıklı tulum/elbise, gözlük, koruyucu eldiven ve antistatik çizme zorunludur.';
+    } else {
+      ppeText = '🛡️ <strong>Standart Koruma:</strong> Baret, koruyucu gözlük, iş eldiveni ve çelik burunlu emniyet ayakkabısı yeterlidir.';
+    }
+    
+    if (category === 'SLV' || noteUpper.includes('LEL') || noteUpper.includes('FLAMMABLE') || noteUpper.includes('FIRE') || noteUpper.includes('YANGIN') || noteUpper.includes('GAS-FREE') || noteUpper.includes('GAZ-SERBEST')) {
+      isgottText = '⚓ <strong>Yangın ve Gaz Alarmı:</strong> Parlama tehlikesi! Kapalı mahale girmeden önce LEL &lt;%1 ve O2 &gt;%20 olmalı, tüm ekipmanlar topraklanmalı ve ex-proof kullanılmalıdır.';
+    } else {
+      isgottText = '⚓ <strong>Mahal Giriş Kontrolü:</strong> Standart kapalı mahal giriş kontrol listesi, mahal havalandırması ve atmosfer ölçümü yapılmalıdır.';
+    }
+    
+    if (category === 'SLV' || category === 'CHM' || noteUpper.includes('RECEPTION') || noteUpper.includes('SLOP') || noteUpper.includes('DISPOSAL') || noteUpper.includes('BERTARAF')) {
+      marpolText = '🌊 <strong>Deşarj Kısıtlaması (Ek-2):</strong> Yıkama suları kesinlikle denize basılamaz; slop tankına veya liman atık kabul tesisine stripping yapılmalıdır.';
+    } else {
+      marpolText = '🌊 <strong>Açık Deniz Deşarjı:</strong> MARPOL kurallarına göre en yakın karadan 12 mil açıkta, belirlenmiş minimum hızda denize deşarj edilebilir.';
+    }
+  } else {
+    if (category === 'SLV' || category === 'CHM' || noteUpper.includes('PPE') || noteUpper.includes('SUIT') || noteUpper.includes('INTENSIVE')) {
+      ppeText = '🛡️ <strong>Heavy Chem Protection:</strong> Full chemical suit, breathing apparatus, chemical-resistant gloves, goggles, and anti-static boots mandatory.';
+    } else {
+      ppeText = '🛡️ <strong>Standard Deck PPE:</strong> Hard hat, protective safety glasses, work gloves, and steel-toe safety shoes.';
+    }
+    
+    if (category === 'SLV' || noteUpper.includes('LEL') || noteUpper.includes('FLAMMABLE') || noteUpper.includes('FIRE') || noteUpper.includes('GAS-FREE')) {
+      isgottText = '⚓ <strong>Critical Gas/Fire Hazard:</strong> Flammable vapors! Confirm LEL &lt;1% and O2 &gt;20.8% before entry. Ensure tank grounding and ex-proof equipment only.';
+    } else {
+      isgottText = '⚓ <strong>Enclosed Space Entry:</strong> Standard hot work/entry permit checklist and continuous mechanical ventilation mandatory.';
+    }
+    
+    if (category === 'SLV' || category === 'CHM' || noteUpper.includes('RECEPTION') || noteUpper.includes('SLOP') || noteUpper.includes('DISPOSAL')) {
+      marpolText = '🌊 <strong>Discharge Restriction (Annex II):</strong> Contains solvent or chemical residue. Discharge to sea strictly prohibited. Must strip to slop or shore reception.';
+    } else {
+      marpolText = '🌊 <strong>Open Sea Discharge:</strong> Wash water may be discharged to sea at least 12 NM from nearest land, subject to MARPOL Annex II guidelines.';
+    }
+  }
+  
+  return { ppeText, isgottText, marpolText };
+}
+
+
 function appendTankErrorCard(id, tank, errorMsg) {
   const container = document.getElementById('tank-protocols-container');
   if (!container) return;
@@ -2249,13 +2352,15 @@ function calculateFleetProtocols() {
       return;
     }
     
-    const key = `${tank.lastCargoId}_${tank.nextCargoId}`;
-    const protocolCode = matrixData[key];
-    if (!protocolCode || protocolCode === 'nan' || protocolCode === 'ATS-PROT-nan') {
+    const resolved = resolveMatrixProtocol(tank.lastCargoId, tank.nextCargoId);
+    if (!resolved) {
       appendTankErrorCard(id, tank, tDict.err_no_protocol || 'No cleaning protocol found in the database.');
       totalTanksPlanned++;
       return;
     }
+    const protocolCode = resolved.code;
+    const isFallback = resolved.isFallback;
+    const fallbackSourceId = resolved.fallbackSourceId;
     
     let proc = proceduresData[protocolCode];
     if (!proc) {
@@ -2335,7 +2440,7 @@ function calculateFleetProtocols() {
     
     totalHours = Math.max(totalHours, parsed.totalHours);
     
-    appendTankProtocolCard(id, tank, proc, protocolCode, parsed, totalWaterVol, fuelMT, detL);
+    appendTankProtocolCard(id, tank, proc, protocolCode, parsed, totalWaterVol, fuelMT, detL, isFallback, fallbackSourceId);
     
     const wwtPass = tank.wwt.hydrocarbons && tank.wwt.chlorides && tank.wwt.permanganate && tank.wwt.ph;
     if (wwtPass) {
@@ -2855,7 +2960,7 @@ function translateSafetyNote(note, targetLang) {
   return clean;
 }
 
-function appendTankProtocolCard(id, tank, proc, code, parsed, waterVol, fuelMT, detL) {
+function appendTankProtocolCard(id, tank, proc, code, parsed, waterVol, fuelMT, detL, isFallback = false, fallbackSourceId = null) {
   const container = document.getElementById('tank-protocols-container');
   if (!container) return;
   const card = document.createElement('div');
@@ -2919,11 +3024,48 @@ function appendTankProtocolCard(id, tank, proc, code, parsed, waterVol, fuelMT, 
   
   const btnPrintVal = lang === 'tr' ? '🖨️ RAPORU YAZDIR' : (lang === 'es' ? '🖨️ IMPRIMIR RAPORTE' : (lang === 'el' ? '🖨️ ΕΚΤΥΠΩΣΗ' : (lang === 'ru' ? '🖨️ ПЕЧАТЬ ЛОГА' : (lang === 'zh' ? '🖨️ 打印日志' : '🖨️ PRINT LOG'))));
 
+  let fallbackText = '';
+  if (isFallback) {
+    let siblingName = '—';
+    if (fallbackSourceId && namesData[fallbackSourceId]) {
+      siblingName = namesData[fallbackSourceId].display || namesData[fallbackSourceId].name || '—';
+    }
+    const tDict = T[lang] || T['en'];
+    if (lang === 'tr') {
+      fallbackText = `${tDict.lbl_fallback_badge || '⚠️ BENZER GRUP REFERANSI'} (${siblingName} ${tDict.lbl_derived_from || 'referansından türetilmiştir'})`;
+    } else {
+      fallbackText = `${tDict.lbl_fallback_badge || '⚠️ SIMILAR CARGO REFERENCE'} (${tDict.lbl_derived_from || 'Derived from'} ${siblingName})`;
+    }
+  }
+
+  const safetyDetails = generateSafetyHeroDetails(proc.category || '', safety);
+  const ppeTitle = lang === 'tr' ? '🛡️ KKD UYUMLULUĞU' : '🛡️ PPE COMPLIANCE';
+  const isgottTitle = lang === 'tr' ? '⚓ ISGOTT GÜVENLİĞİ' : '⚓ ISGOTT SAFETY';
+  const marpolTitle = lang === 'tr' ? '🌊 MARPOL ÇEVRE' : '🌊 MARPOL ENVIRONMENT';
+
+  const safetyHeroCardsHtml = `
+    <div class="safety-hero-cards" style="margin-top: 16px;">
+      <div class="hero-card kkd-card">
+        <div class="hero-card-title">${ppeTitle}</div>
+        <div class="hero-card-content">${safetyDetails.ppeText}</div>
+      </div>
+      <div class="hero-card isgott-card">
+        <div class="hero-card-title">${isgottTitle}</div>
+        <div class="hero-card-content">${safetyDetails.isgottText}</div>
+      </div>
+      <div class="hero-card marpol-card">
+        <div class="hero-card-title">${marpolTitle}</div>
+        <div class="hero-card-content">${safetyDetails.marpolText}</div>
+      </div>
+    </div>
+  `;
+
   card.innerHTML = `
     <div class="tank-prot-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
       <div class="tank-prot-meta">
         <span class="tank-prot-tag">TANK ${id}</span>
         <span class="tank-prot-cargo-seq">${tank.lastCargoName} ➡️ ${tank.nextCargoName}</span>
+        ${isFallback ? `<span class="fallback-badge" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 4px; padding: 2px 6px; font-size: 0.6rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; vertical-align: middle;">${fallbackText}</span>` : ''}
       </div>
       <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
         <span class="tank-prot-code" style="font-size: 0.65rem; color: var(--text3);">${code} (${title})</span>
@@ -2944,13 +3086,15 @@ function appendTankProtocolCard(id, tank, proc, code, parsed, waterVol, fuelMT, 
       ${stepsList}
     </div>
     
-    <div class="safety-panel" style="padding: 16px;">
+    <div class="safety-panel" style="padding: 16px; margin-bottom: 16px;">
       <div class="safety-icon" style="font-size: 1.2rem;">⚠️</div>
       <div class="safety-content">
         <div class="safety-title" style="font-size: 0.6rem;">SAFETY NOTES</div>
         <p class="safety-text" style="font-size: 0.8rem; color: #cc9988;">${safety}</p>
       </div>
     </div>
+
+    ${safetyHeroCardsHtml}
   `;
   
   container.appendChild(card);
