@@ -367,6 +367,15 @@ body {
 
 .run-btn:active { transform: translateY(0); }
 
+.run-btn.saved-success {
+  background: #10b981 !important; /* Vibrant neon green */
+  color: #000000 !important;
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.7), 0 4px 20px rgba(16, 185, 129, 0.3) !important;
+  border-color: #10b981 !important;
+  cursor: default !important;
+  transform: none !important;
+}
+
 .btn-icon { font-size: 0.75rem; opacity: 0.7; }
 
 .error-msg {
@@ -1308,11 +1317,42 @@ body {
   background: rgba(0, 212, 255, 0.04);
 }
 .tank-card.just-saved {
-  animation: saveFlash 1.5s ease;
+  animation: saveFlash 1.5s ease-in-out !important;
+}
+.tank-card.just-saved::after {
+  content: "✓";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.5);
+  font-size: 2.2rem;
+  color: #10b981;
+  font-weight: 800;
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.85), 0 0 20px rgba(16, 185, 129, 0.4);
+  pointer-events: none;
+  z-index: 20;
+  animation: tickFadeInPop 1.5s ease forwards;
 }
 @keyframes saveFlash {
-  0%, 100% { border-color: var(--border2); }
-  50% { border-color: var(--green) !important; box-shadow: 0 0 15px var(--green-dim); }
+  30%, 70% {
+    border-color: #10b981 !important;
+    box-shadow: 0 0 25px rgba(16, 185, 129, 0.85) !important;
+    background: rgba(16, 185, 129, 0.08) !important;
+  }
+}
+@keyframes tickFadeInPop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  30%, 70% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.25);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.85);
+  }
 }
 
 /* Tank Coating color indicators */
@@ -1451,10 +1491,78 @@ body {
   color: var(--text2);
   cursor: pointer;
 }
-.wwt-chk-label input {
+.wwt-chk-label input[type="checkbox"],
+.custom-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
   width: 16px;
   height: 16px;
+  border: 1px solid rgba(0, 212, 255, 0.4);
+  border-radius: 3px;
+  background: rgba(5, 8, 16, 0.6);
+  position: relative;
+  outline: none;
   cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 0 4px rgba(0, 212, 255, 0.1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.wwt-chk-label input[type="checkbox"]:hover,
+.custom-checkbox:hover {
+  border-color: rgba(0, 212, 255, 0.8);
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.25);
+}
+
+.wwt-chk-label input[type="checkbox"]:checked,
+.custom-checkbox:checked {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: #10b981;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+.wwt-chk-label input[type="checkbox"]::after,
+.custom-checkbox::after {
+  content: "✓";
+  font-size: 11px;
+  color: #10b981;
+  font-weight: 900;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: all 0.2s cubic-bezier(0.12, 0.4, 0.29, 1.46);
+  display: block;
+  line-height: 1;
+}
+
+.wwt-chk-label input[type="checkbox"]:checked::after,
+.custom-checkbox:checked::after {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+/* Light mode overrides for custom checkboxes */
+body.light-mode .wwt-chk-label input[type="checkbox"],
+body.light-mode .custom-checkbox {
+  border-color: rgba(0, 119, 170, 0.3);
+  background: #f8fafc;
+  box-shadow: none;
+}
+body.light-mode .wwt-chk-label input[type="checkbox"]:hover,
+body.light-mode .custom-checkbox:hover {
+  border-color: rgba(0, 119, 170, 0.6);
+}
+body.light-mode .wwt-chk-label input[type="checkbox"]:checked,
+body.light-mode .custom-checkbox:checked {
+  background: rgba(5, 150, 105, 0.05);
+  border-color: #059669;
+  box-shadow: 0 0 6px rgba(5, 150, 105, 0.2);
+}
+body.light-mode .wwt-chk-label input[type="checkbox"]::after,
+body.light-mode .custom-checkbox::after {
+  color: #059669;
 }
 
 /* --- ECO-WASH & FINANCIALS --- */

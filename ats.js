@@ -136,6 +136,7 @@ const T = {
     wwt_permanganate: '⏱️ Permanganate Time Test (Pass)',
     wwt_ph: '📈 pH Neutrality (6.5 - 7.5)',
     btn_save_config: 'SAVE CONFIGURATION',
+    btn_save_config_success: '✓ CONFIGURATION SAVED',
     btn_clear_config: 'CLEAR',
     btn_clear_all_tanks: '🧹 CLEAR ALL TANKS',
     lbl_report_title: 'FLEET SIMULATION REPORT',
@@ -226,6 +227,7 @@ const T = {
     wwt_permanganate: '⏱️ Permanganat Süre Testi (Geçti)',
     wwt_ph: '📈 pH Nötrlük Kontrolü (6.5 - 7.5)',
     btn_save_config: 'KONFİGÜRASYONU KAYDET',
+    btn_save_config_success: '✓ KONFİGÜRASYON KAYDEDİLDİ',
     btn_clear_config: 'TEMİZLE',
     btn_clear_all_tanks: '🧹 TÜMÜNÜ TEMİZLE',
     lbl_report_title: 'FİLO SİMÜLASYON RAPORU',
@@ -316,6 +318,7 @@ const T = {
     wwt_permanganate: '⏱️ Tiempo de Permanganato (Aprobado)',
     wwt_ph: '📈 Neutralidad del pH (6.5 - 7.5)',
     btn_save_config: 'GUARDAR CONFIGURACIÓN',
+    btn_save_config_success: '✓ CONFIGURACIÓN GUARDADA',
     btn_clear_config: 'LIMPIAR',
     btn_clear_all_tanks: '🧹 LIMPIAR TODOS',
     lbl_report_title: 'INFORME DE SIMULACIÓN DE FLOTA',
@@ -406,6 +409,7 @@ const T = {
     wwt_permanganate: '⏱️ Χρόνος Υπερμαγγανικού (Επιτυχές)',
     wwt_ph: '📈 Ουδετερότητα pH (6.5 - 7.5)',
     btn_save_config: 'ΑΠΟΘΗΚΕΥΣΗ ΡΥΘΜΙΣΕΩΝ',
+    btn_save_config_success: '✓ ΑΠΟΘΗΚΕΥΤΗΚΕ',
     btn_clear_config: 'ΚΑΘΑΡΙΣΜΟΣ',
     btn_clear_all_tanks: '🧹 ΚΑΘΑΡΙΣΜΟΣ ΟΛΩΝ',
     lbl_report_title: 'ΕΚΘΕΣΗ ΠΡΟΣΟΜΟΙΩΣΗΣ ΣΤΟΛΟΥ',
@@ -496,6 +500,7 @@ const T = {
     wwt_permanganate: '⏱️ Перманганатное Время (Пройдено)',
     wwt_ph: '📈 Проверка pH (6.5 - 7.5)',
     btn_save_config: 'СОХРАНИТЬ КОНФИГУРАЦИЮ',
+    btn_save_config_success: '✓ КОНФИГУРАЦИЯ СОХРАНЕНА',
     btn_clear_config: 'ОЧИСТИТЬ',
     btn_clear_all_tanks: '🧹 ОЧИСТИТЬ ВСЕ',
     lbl_report_title: 'ОТЧЕТ ПО СИМУЛЯЦИИ ФЛОТА',
@@ -586,6 +591,7 @@ const T = {
     wwt_permanganate: '⏱️ 高锰酸钾时间测试 (合格)',
     wwt_ph: '📈 pH 中性度检查 (6.5 - 7.5)',
     btn_save_config: '保存配置信息',
+    btn_save_config_success: '✓ 配置已保存',
     btn_clear_config: '清除',
     btn_clear_all_tanks: '🧹 清除所有舱',
     lbl_report_title: '船队模拟报告',
@@ -1800,6 +1806,22 @@ function saveTankConfig() {
   if (cardEl) {
     cardEl.classList.add('just-saved');
     setTimeout(() => cardEl.classList.remove('just-saved'), 1500);
+  }
+
+  // Temporarily show success state on the save button
+  const saveBtn = document.getElementById('save-tank-btn');
+  if (saveBtn) {
+    const originalText = (T[lang] && T[lang].btn_save_config) || 'SAVE CONFIGURATION';
+    const successText = (T[lang] && T[lang].btn_save_config_success) || '✓ CONFIGURATION SAVED';
+    saveBtn.innerHTML = successText;
+    saveBtn.classList.add('saved-success');
+    saveBtn.disabled = true;
+    
+    setTimeout(() => {
+      saveBtn.innerHTML = originalText;
+      saveBtn.classList.remove('saved-success');
+      saveBtn.disabled = false;
+    }, 1500);
   }
 }
 
