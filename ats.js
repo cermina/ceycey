@@ -115,6 +115,7 @@ const T = {
     lbl_detergent_cost: 'Detergent ($/L)',
     lbl_nozzle_flow: 'Nozzle Flow (m³/h)',
     lbl_ambient_temp: 'Ambient Temp (°C)',
+    lbl_sea_temp: 'Sea Water Temp (°C)',
     lbl_boiler_efficiency: 'Boiler Efficiency (%)',
     btn_simulate_run: 'SIMULATE & RUN PROTOCOLS',
     lbl_tank_details: 'TANK DETAILS EDITOR',
@@ -191,6 +192,7 @@ const T = {
     lbl_detergent_cost: 'Deterjan Maliyeti ($/L)',
     lbl_nozzle_flow: 'Butterworth Debisi (m³/h)',
     lbl_ambient_temp: 'Çevre Sıcaklığı (°C)',
+    lbl_sea_temp: 'Deniz Suyu Sıcaklığı (°C)',
     lbl_boiler_efficiency: 'Kazan Verimliliği (%)',
     btn_simulate_run: 'SİMÜLE ET VE PROTOKOLLERİ ÇALIŞTIR',
     lbl_tank_details: 'TANK DETAY EDİTÖRÜ',
@@ -267,6 +269,7 @@ const T = {
     lbl_detergent_cost: 'Costo de Detergente ($/L)',
     lbl_nozzle_flow: 'Flujo de Butterworth (m³/h)',
     lbl_ambient_temp: 'Temp. Ambiente (°C)',
+    lbl_sea_temp: 'Temp. del Agua de Mar (°C)',
     lbl_boiler_efficiency: 'Eficiencia de la Caldera (%)',
     btn_simulate_run: 'SIMULAR Y EJECUTAR PROTOCOLOS',
     lbl_tank_details: 'EDITOR DE DETALLES DEL TANQUE',
@@ -343,6 +346,7 @@ const T = {
     lbl_detergent_cost: 'Κόστος Απορρυπαντικού ($/L)',
     lbl_nozzle_flow: 'Παροχή Butterworth (m³/h)',
     lbl_ambient_temp: 'Θερμοκρασία Περιβάλλοντος (°C)',
+    lbl_sea_temp: 'Θερμοκρασία Θάλασσας (°C)',
     lbl_boiler_efficiency: 'Απόδοση Λέβητα (%)',
     btn_simulate_run: 'ΠΡΟΣΟΜΟΙΩΣΗ & ΕΚΤΕΛΕΣΗ ΠΡΩΤΟΚΟΛΛΩΝ',
     lbl_tank_details: 'ΕΠΕΞΕΡΓΑΣΤΗΣ ΔΕΞΑΜΕΝΗΣ',
@@ -419,6 +423,7 @@ const T = {
     lbl_detergent_cost: 'Стоимость Детергента ($/L)',
     lbl_nozzle_flow: 'Расход Butterworth (m³/h)',
     lbl_ambient_temp: 'Темп. Среды (°C)',
+    lbl_sea_temp: 'Темп. Морской Воды (°C)',
     lbl_boiler_efficiency: 'КПД Котла (%)',
     btn_simulate_run: 'СИМУЛИРОВАТЬ И ЗАПУСТИТЬ ПРОТОКОЛЫ',
     lbl_tank_details: 'РЕДАКТИРОВАНИЕ ТАНКА',
@@ -496,6 +501,7 @@ const T = {
     lbl_detergent_cost: '清洁剂成本 ($/升)',
     lbl_nozzle_flow: '洗舱机流量 (m³/h)',
     lbl_ambient_temp: '环境温度 (°C)',
+    lbl_sea_temp: '海水温度 (°C)',
     lbl_boiler_efficiency: '锅炉效率 (%)',
     btn_simulate_run: '模拟计算并运行洗舱协议',
     lbl_tank_details: '舱室详情编辑器',
@@ -1997,7 +2003,10 @@ function calculateFleetProtocols() {
   const priceDetergent = parseFloat(document.getElementById('coeff-detergent').value) || 12;
   const flowRate = parseFloat(document.getElementById('coeff-flow').value) || 15;
   const tempAmbient = parseFloat(document.getElementById('coeff-temp').value) || 15;
+  const tempSea = parseFloat(document.getElementById('coeff-sea-temp').value) || 12;
   const efficiency = parseFloat(document.getElementById('coeff-eff').value) || 82;
+  
+  const initialWaterTemp = 0.8 * tempSea + 0.2 * tempAmbient;
   
   let totalFWVol = 0;
   let totalSWVol = 0;
@@ -2077,12 +2086,12 @@ function calculateFleetProtocols() {
     let heatEnergyKJ = 0;
     if (parsed.warmVolume > 0) {
       const warmVol = parsed.warmVolume * flowRate * nozzleCount;
-      const dT = Math.max(0, parsed.warmAvgTemp - tempAmbient);
+      const dT = Math.max(0, parsed.warmAvgTemp - initialWaterTemp);
       heatEnergyKJ += warmVol * 1025 * 4.184 * dT;
     }
     if (parsed.hotVolume > 0) {
       const hotVol = parsed.hotVolume * flowRate * nozzleCount;
-      const dT = Math.max(0, parsed.hotAvgTemp - tempAmbient);
+      const dT = Math.max(0, parsed.hotAvgTemp - initialWaterTemp);
       heatEnergyKJ += hotVol * 1025 * 4.184 * dT;
     }
     

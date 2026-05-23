@@ -695,6 +695,30 @@ body {
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
+.settings-input {
+  width: 100%;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  outline: none;
+  transition: all 0.25s ease;
+  box-sizing: border-box;
+}
+
+.settings-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+  background: rgba(0, 212, 255, 0.03);
+}
+
+.settings-input::placeholder {
+  color: var(--text3);
+}
+
 /* ---- COMPATIBILITY WARNINGS ---- */
 .compat-warnings {
   margin-bottom: 24px;
@@ -994,7 +1018,7 @@ body {
 }
 
 .left-panel {
-  flex: 0 0 350px;
+  flex: 0 0 390px;
   background: rgba(10, 15, 30, 0.45);
   border: 1px solid var(--border);
   border-radius: var(--radius2);
@@ -1094,10 +1118,10 @@ body {
   background: rgba(5, 8, 16, 0.7);
   border: 2px solid var(--border2);
   box-shadow: 0 0 30px rgba(0, 212, 255, 0.05);
-  padding: 85px 18px 40px;
+  padding: 95px 18px 40px;
   /* Bow shape (blunt top) and Aft shape (slightly rounded bottom) */
-  border-top-left-radius: 110px 420px;
-  border-top-right-radius: 110px 420px;
+  border-top-left-radius: 90px 350px;
+  border-top-right-radius: 90px 350px;
   border-bottom-left-radius: 40px 60px;
   border-bottom-right-radius: 40px 60px;
   display: flex;
