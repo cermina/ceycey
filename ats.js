@@ -1682,6 +1682,11 @@ function appendTankCard(parentEl, tankId) {
   if (tankId === 'SlopC') displayName = 'Slop C';
   if (tankId === 'SlopS') displayName = 'Slop S';
   
+  let clearBtnHtml = '';
+  if (tank.lastCargoName || tank.nextCargoName) {
+    clearBtnHtml = `<button class="tank-card-clear-btn" onclick="event.stopPropagation(); clearSpecificTankConfig('${tankId}')" title="Clear Tank">×</button>`;
+  }
+  
   card.innerHTML = `
     <div class="tank-card-top">
       <span class="tank-name-label">${displayName}</span>
@@ -1691,6 +1696,7 @@ function appendTankCard(parentEl, tankId) {
     <div class="tank-card-indicators" id="ind-wrap-${tankId}">
       ${indicators}
     </div>
+    ${clearBtnHtml}
   `;
   
   parentEl.appendChild(card);
@@ -1881,6 +1887,55 @@ function clearAllTanksConfig() {
   checkFleetReactivity();
   renderVesselGrid();
   saveVesselState();
+  if (disclaimerAccepted) {
+    calculateFleetProtocols();
+  }
+}
+
+function clearSpecificTankConfig(tankId) {
+  const tank = vesselTanks[tankId];
+  if (!tank) return;
+  
+  tank.lastCargoId = null;
+  tank.lastCargoName = '';
+  tank.nextCargoId = null;
+  tank.nextCargoName = '';
+  tank.heated = false;
+  tank.wwt = { hydrocarbons: false, chlorides: false, permanganate: false, ph: false };
+  if (tank.timeSheet) {
+    tank.timeSheet = {};
+  }
+  
+  if (activeEditingTankId === tankId) {
+    document.getElementById('editor-input-last').value = '';
+    document.getElementById('editor-input-next').value = '';
+    document.getElementById('editor-input-last').dataset.cargoId = '';
+    document.getElementById('editor-input-next').dataset.cargoId = '';
+    document.getElementById('editor-ind-last').textContent = '—';
+    document.getElementById('editor-ind-next').textContent = '—';
+    document.getElementById('editor-heated').checked = false;
+    
+    document.getElementById('wwt-hydrocarbons').checked = false;
+    document.getElementById('wwt-chlorides').checked = false;
+    document.getElementById('wwt-permanganate').checked = false;
+    document.getElementById('wwt-ph').checked = false;
+    
+    validateEditorInput('last');
+    validateEditorInput('next');
+  }
+  
+  checkFleetReactivity();
+  renderVesselGrid();
+  saveVesselState();
+  if (disclaimerAccepted) {
+    calculateFleetProtocols();
+  }
+  
+  const cardEl = document.getElementById(`card-${tankId}`);
+  if (cardEl) {
+    cardEl.classList.add('just-saved');
+    setTimeout(() => cardEl.classList.remove('just-saved'), 1500);
+  }
 }
 
 // ---- COF RULE-BASED CHEMICAL CLASSIFIER ----
@@ -3556,30 +3611,53 @@ function switchDashboardTab(tabId) {
 }
 
 function printSingleCertificate(tankId) {
+  const origCard = document.getElementById(`wwt-cert-card-${tankId}`);
+  if (!origCard) return;
+
+  const printContainer = origCard.cloneNode(true);
+  printContainer.id = 'print-cert-container';
+  
+  const printBtn = printContainer.querySelector('.cert-print-btn');
+  if (printBtn) printBtn.style.display = 'none';
+
+  printContainer.style.cssText = `
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    border: 2px solid #000 !important;
+    box-shadow: none !important;
+    background: #fff !important;
+    color: #000 !important;
+    padding: 30px !important;
+    box-sizing: border-box !important;
+  `;
+
+  document.body.appendChild(printContainer);
+
   const style = document.createElement('style');
   style.id = 'print-single-cert-style';
   style.innerHTML = `
     @media print {
-      body * {
-        visibility: hidden !important;
+      body {
+        background: #fff !important;
+        color: #000 !important;
       }
-      #wwt-cert-card-${tankId}, #wwt-cert-card-${tankId} * {
-        visibility: visible !important;
+      body > :not(#print-cert-container) {
+        display: none !important;
       }
-      #wwt-cert-card-${tankId} {
+      #print-cert-container {
+        display: block !important;
         position: absolute !important;
         left: 0 !important;
         top: 0 !important;
         width: 100% !important;
-        border: 2px solid #000 !important;
-        box-shadow: none !important;
         background: #fff !important;
         color: #000 !important;
+        border: 2px solid #000 !important;
         padding: 30px !important;
-        break-inside: avoid !important;
-      }
-      #wwt-cert-card-${tankId} .cert-print-btn {
-        display: none !important;
+        box-sizing: border-box !important;
       }
     }
   `;
@@ -3587,6 +3665,7 @@ function printSingleCertificate(tankId) {
   window.print();
   setTimeout(() => {
     style.remove();
+    printContainer.remove();
   }, 1000);
 }
 
@@ -3753,18 +3832,21 @@ function printTimeSheet(tankId) {
   style.id = 'print-timesheet-style';
   style.innerHTML = `
     @media print {
-      body * {
-        visibility: hidden !important;
+      body {
+        background: #fff !important;
+        color: #000 !important;
       }
-      #print-timesheet-container, #print-timesheet-container * {
-        visibility: visible !important;
+      body > :not(#print-timesheet-container) {
+        display: none !important;
       }
       #print-timesheet-container {
+        display: block !important;
         position: absolute !important;
         left: 0 !important;
         top: 0 !important;
         width: 100% !important;
         background: #fff !important;
+        color: #000 !important;
       }
     }
   `;
