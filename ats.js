@@ -1129,6 +1129,10 @@ function applyVesselPreset() {
   
   if (preset === 'custom') {
     customFields.classList.remove('hidden');
+    const rowsInput = document.getElementById('custom-rows');
+    if (rowsInput && vesselLayout && vesselLayout.rows) {
+      rowsInput.value = vesselLayout.rows;
+    }
     onCustomRowsChange(); // Initialize custom inputs if not already done
     return;
   }
@@ -1146,7 +1150,7 @@ function applyVesselPreset() {
     vesselLayout.preset = 'preset-18';
     vesselLayout.rowsData = [];
     for (let r = 1; r <= targetRows; r++) {
-      vesselLayout.rowsData.push({ row: r, P: true, C: false, S: true });
+      vesselLayout.rowsData.push({ row: r, P_num: r, C_num: null, S_num: r });
     }
   } else if (preset === 'preset-26') {
     vesselLayout.rows = targetRows;
@@ -1154,7 +1158,7 @@ function applyVesselPreset() {
     vesselLayout.rowsData = [];
     for (let r = 1; r <= targetRows; r++) {
       const hasC = (r !== 1 && r !== targetRows);
-      vesselLayout.rowsData.push({ row: r, P: true, C: hasC, S: true });
+      vesselLayout.rowsData.push({ row: r, P_num: r, C_num: hasC ? r : null, S_num: r });
     }
   }
   
@@ -1212,7 +1216,7 @@ function onCustomRowsChange() {
     if (existing) {
       newRowsData.push(existing);
     } else {
-      newRowsData.push({ row: r, P: true, C: false, S: true });
+      newRowsData.push({ row: r, P_num: r, C_num: null, S_num: r });
     }
   }
   vesselLayout.rowsData = newRowsData;
@@ -1226,10 +1230,18 @@ function onCustomRowsChange() {
   rebuildVesselFromConfigs();
 }
 
-function toggleRowTank(rowNum, tankType) {
+function changeRowTankNumber(rowNum, type, val) {
   const rowData = vesselLayout.rowsData.find(r => String(r.row) === String(rowNum));
   if (rowData) {
-    const chk = document.getElementById(`chk-r${rowNum}-${tankType}`);
+    rowData[type] = val ? parseInt(val) : null;
+    rebuildVesselFromConfigs();
+  }
+}
+
+function toggleSlopRowTank(tankType) {
+  const rowData = vesselLayout.rowsData.find(r => r.row === 'Slop');
+  if (rowData) {
+    const chk = document.getElementById(`chk-rSlop-${tankType}`);
     rowData[tankType] = chk ? chk.checked : false;
     rebuildVesselFromConfigs();
   }
@@ -1244,24 +1256,58 @@ function renderRowConfigInputs() {
     vesselLayout.rowsData = [];
   }
   
+  const generateSelectOptions = (currentVal) => {
+    let html = `<option value="">-</option>`;
+    for (let i = 1; i <= 20; i++) {
+      html += `<option value="${i}" ${String(currentVal) === String(i) ? 'selected' : ''}>${i}</option>`;
+    }
+    return html;
+  };
+  
   vesselLayout.rowsData.forEach(rowData => {
     const rowEl = document.createElement('div');
     rowEl.className = 'row-config-item';
     
-    rowEl.innerHTML = `
-      <span class="row-config-label" style="font-family: var(--mono); font-size: 0.8rem; font-weight: 700; color: var(--text2);">${rowData.row === 'Slop' ? 'SLOP TANKS' : 'HOLD ' + rowData.row}</span>
-      <div class="row-config-chks" style="display: flex; gap: 15px;">
-        <label style="display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 0.75rem; cursor: pointer; color: var(--text);">
-          <input type="checkbox" id="chk-r${rowData.row}-P" ${rowData.P ? 'checked' : ''} onchange="toggleRowTank('${rowData.row}', 'P')"> P
-        </label>
-        <label style="display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 0.75rem; cursor: pointer; color: var(--text);">
-          <input type="checkbox" id="chk-r${rowData.row}-C" ${rowData.C ? 'checked' : ''} onchange="toggleRowTank('${rowData.row}', 'C')"> C
-        </label>
-        <label style="display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 0.75rem; cursor: pointer; color: var(--text);">
-          <input type="checkbox" id="chk-r${rowData.row}-S" ${rowData.S ? 'checked' : ''} onchange="toggleRowTank('${rowData.row}', 'S')"> S
-        </label>
-      </div>
-    `;
+    if (rowData.row === 'Slop') {
+      rowEl.innerHTML = `
+        <span class="row-config-label" style="font-family: var(--mono); font-size: 0.8rem; font-weight: 700; color: var(--text2);">SLOP TANKS</span>
+        <div class="row-config-chks" style="display: flex; gap: 15px;">
+          <label style="display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 0.75rem; cursor: pointer; color: var(--text);">
+            <input type="checkbox" id="chk-rSlop-P" ${rowData.P ? 'checked' : ''} onchange="toggleSlopRowTank('P')"> P
+          </label>
+          <label style="display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 0.75rem; cursor: pointer; color: var(--text);">
+            <input type="checkbox" id="chk-rSlop-C" ${rowData.C ? 'checked' : ''} onchange="toggleSlopRowTank('C')"> C
+          </label>
+          <label style="display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 0.75rem; cursor: pointer; color: var(--text);">
+            <input type="checkbox" id="chk-rSlop-S" ${rowData.S ? 'checked' : ''} onchange="toggleSlopRowTank('S')"> S
+          </label>
+        </div>
+      `;
+    } else {
+      rowEl.innerHTML = `
+        <span class="row-config-label" style="font-family: var(--mono); font-size: 0.8rem; font-weight: 700; color: var(--text2);">HOLD ${rowData.row}</span>
+        <div class="row-config-selects" style="display: flex; gap: 10px; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <span style="font-family: var(--mono); font-size: 0.7rem; color: var(--text3);">P:</span>
+            <select class="select-input" style="padding: 2px 4px; font-size: 0.75rem; font-family: var(--mono); width: 45px; background: var(--bg2); border: 1px solid var(--border2); color: var(--text); border-radius: 4px;" onchange="changeRowTankNumber('${rowData.row}', 'P_num', this.value)">
+              ${generateSelectOptions(rowData.P_num)}
+            </select>
+          </div>
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <span style="font-family: var(--mono); font-size: 0.7rem; color: var(--text3);">C:</span>
+            <select class="select-input" style="padding: 2px 4px; font-size: 0.75rem; font-family: var(--mono); width: 45px; background: var(--bg2); border: 1px solid var(--border2); color: var(--text); border-radius: 4px;" onchange="changeRowTankNumber('${rowData.row}', 'C_num', this.value)">
+              ${generateSelectOptions(rowData.C_num)}
+            </select>
+          </div>
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <span style="font-family: var(--mono); font-size: 0.7rem; color: var(--text3);">S:</span>
+            <select class="select-input" style="padding: 2px 4px; font-size: 0.75rem; font-family: var(--mono); width: 45px; background: var(--bg2); border: 1px solid var(--border2); color: var(--text); border-radius: 4px;" onchange="changeRowTankNumber('${rowData.row}', 'S_num', this.value)">
+              ${generateSelectOptions(rowData.S_num)}
+            </select>
+          </div>
+        </div>
+      `;
+    }
     container.appendChild(rowEl);
   });
 }
@@ -1275,50 +1321,33 @@ function rebuildVesselFromConfigs() {
   vesselLayout.rowsData.forEach(rowData => {
     const r = rowData.row;
     const isSlop = (r === 'Slop');
-    if (rowData.P) {
-      const id = isSlop ? 'SlopP' : r + 'P';
-      vesselTanks[id] = oldTanks[id] || {
-        id: id,
-        capacity: isSlop ? 500 : 1200,
-        coating: 'epoxy',
-        lineCoating: 'stainless',
-        lastCargoId: null,
-        lastCargoName: '',
-        nextCargoId: null,
-        nextCargoName: '',
-        heated: false,
-        wwt: { hydrocarbons: false, chlorides: false, permanganate: false, ph: false }
-      };
-    }
-    if (rowData.C) {
-      const id = isSlop ? 'SlopC' : r + 'C';
-      vesselTanks[id] = oldTanks[id] || {
-        id: id,
-        capacity: isSlop ? 600 : 1500,
-        coating: 'zinc',
-        lineCoating: 'stainless',
-        lastCargoId: null,
-        lastCargoName: '',
-        nextCargoId: null,
-        nextCargoName: '',
-        heated: false,
-        wwt: { hydrocarbons: false, chlorides: false, permanganate: false, ph: false }
-      };
-    }
-    if (rowData.S) {
-      const id = isSlop ? 'SlopS' : r + 'S';
-      vesselTanks[id] = oldTanks[id] || {
-        id: id,
-        capacity: isSlop ? 500 : 1200,
-        coating: 'epoxy',
-        lineCoating: 'stainless',
-        lastCargoId: null,
-        lastCargoName: '',
-        nextCargoId: null,
-        nextCargoName: '',
-        heated: false,
-        wwt: { hydrocarbons: false, chlorides: false, permanganate: false, ph: false }
-      };
+    
+    if (isSlop) {
+      if (rowData.P) {
+        const id = 'SlopP';
+        vesselTanks[id] = oldTanks[id] || createDefaultTankState(id, 500);
+      }
+      if (rowData.C) {
+        const id = 'SlopC';
+        vesselTanks[id] = oldTanks[id] || createDefaultTankState(id, 600);
+      }
+      if (rowData.S) {
+        const id = 'SlopS';
+        vesselTanks[id] = oldTanks[id] || createDefaultTankState(id, 500);
+      }
+    } else {
+      if (rowData.P_num) {
+        const id = rowData.P_num + 'P';
+        vesselTanks[id] = oldTanks[id] || createDefaultTankState(id, 1200);
+      }
+      if (rowData.C_num) {
+        const id = rowData.C_num + 'C';
+        vesselTanks[id] = oldTanks[id] || createDefaultTankState(id, 1500);
+      }
+      if (rowData.S_num) {
+        const id = rowData.S_num + 'S';
+        vesselTanks[id] = oldTanks[id] || createDefaultTankState(id, 1200);
+      }
     }
   });
   
@@ -1328,22 +1357,18 @@ function rebuildVesselFromConfigs() {
   saveVesselState();
 }
 
-function createTank(id, cap, coating) {
-  vesselTanks[id] = {
+function createDefaultTankState(id, capacity) {
+  return {
     id: id,
-    capacity: cap,
-    coating: coating,
+    capacity: capacity,
+    coating: id.includes('C') ? 'zinc' : 'epoxy',
+    lineCoating: 'stainless',
     lastCargoId: null,
     lastCargoName: '',
     nextCargoId: null,
     nextCargoName: '',
     heated: false,
-    wwt: {
-      hydrocarbons: false,
-      chlorides: false,
-      permanganate: false,
-      ph: false
-    }
+    wwt: { hydrocarbons: false, chlorides: false, permanganate: false, ph: false }
   };
 }
 
@@ -1365,42 +1390,40 @@ function buildAdjacencyGraph() {
   const rowsData = vesselLayout.rowsData || [];
   for (let i = 0; i < rowsData.length; i++) {
     const rowData = rowsData[i];
-    const r = rowData.row;
-    const isSlop = (r === 'Slop');
+    const isSlop = (rowData.row === 'Slop');
     
-    const rP = isSlop ? 'SlopP' : r + 'P';
-    const rC = isSlop ? 'SlopC' : r + 'C';
-    const rS = isSlop ? 'SlopS' : r + 'S';
+    const tP = isSlop ? (rowData.P ? 'SlopP' : null) : (rowData.P_num ? rowData.P_num + 'P' : null);
+    const tC = isSlop ? (rowData.C ? 'SlopC' : null) : (rowData.C_num ? rowData.C_num + 'C' : null);
+    const tS = isSlop ? (rowData.S ? 'SlopS' : null) : (rowData.S_num ? rowData.S_num + 'S' : null);
     
     // Intrarow adjacencies
-    if (rowData.C) {
-      addAdjacency(rP, rC);
-      addAdjacency(rS, rC);
+    if (tC) {
+      if (tP) addAdjacency(tP, tC);
+      if (tS) addAdjacency(tS, tC);
     } else {
-      addAdjacency(rP, rS);
+      if (tP && tS) addAdjacency(tP, tS);
     }
     
     // Interrow adjacencies to next row in the layout list
     if (i + 1 < rowsData.length) {
       const nextRowData = rowsData[i + 1];
-      const nr = nextRowData.row;
-      const nextIsSlop = (nr === 'Slop');
+      const nextIsSlop = (nextRowData.row === 'Slop');
       
-      const nP = nextIsSlop ? 'SlopP' : nr + 'P';
-      const nC = nextIsSlop ? 'SlopC' : nr + 'C';
-      const nS = nextIsSlop ? 'SlopS' : nr + 'S';
+      const nP = nextIsSlop ? (nextRowData.P ? 'SlopP' : null) : (nextRowData.P_num ? nextRowData.P_num + 'P' : null);
+      const nC = nextIsSlop ? (nextRowData.C ? 'SlopC' : null) : (nextRowData.C_num ? nextRowData.C_num + 'C' : null);
+      const nS = nextIsSlop ? (nextRowData.S ? 'SlopS' : null) : (nextRowData.S_num ? nextRowData.S_num + 'S' : null);
       
-      addAdjacency(rP, nP);
-      addAdjacency(rS, nS);
-      addAdjacency(rC, nC);
+      if (tP && nP) addAdjacency(tP, nP);
+      if (tS && nS) addAdjacency(tS, nS);
+      if (tC && nC) addAdjacency(tC, nC);
       
-      if (rowData.C && !nextRowData.C) {
-        addAdjacency(rC, nP);
-        addAdjacency(rC, nS);
+      if (tC && !nC) {
+        if (nP) addAdjacency(tC, nP);
+        if (nS) addAdjacency(tC, nS);
       }
-      if (!rowData.C && nextRowData.C) {
-        addAdjacency(rP, nC);
-        addAdjacency(rS, nC);
+      if (!tC && nC) {
+        if (tP) addAdjacency(tP, nC);
+        if (tS) addAdjacency(tS, nC);
       }
     }
   }
@@ -1415,14 +1438,18 @@ function renderVesselGrid() {
   
   vesselLayout.rowsData.forEach(rowData => {
     const rowEl = document.createElement('div');
-    const r = rowData.row;
+    const isSlop = (rowData.row === 'Slop');
     
-    if (rowData.C) {
+    // Determine if Center tank exists in this row
+    const hasC = isSlop ? rowData.C : (rowData.C_num !== null);
+    
+    if (hasC) {
       rowEl.className = 'vessel-row row-pcs';
       
       // Port
-      if (rowData.P) {
-        appendTankCard(rowEl, r + 'P');
+      const pId = isSlop ? 'SlopP' : (rowData.P_num ? rowData.P_num + 'P' : null);
+      if (pId && vesselTanks[pId]) {
+        appendTankCard(rowEl, pId);
       } else {
         const placeholder = document.createElement('div');
         placeholder.className = 'tank-placeholder';
@@ -1430,11 +1457,19 @@ function renderVesselGrid() {
       }
       
       // Center
-      appendTankCard(rowEl, r + 'C');
+      const cId = isSlop ? 'SlopC' : (rowData.C_num ? rowData.C_num + 'C' : null);
+      if (cId && vesselTanks[cId]) {
+        appendTankCard(rowEl, cId);
+      } else {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'tank-placeholder';
+        rowEl.appendChild(placeholder);
+      }
       
       // Starboard
-      if (rowData.S) {
-        appendTankCard(rowEl, r + 'S');
+      const sId = isSlop ? 'SlopS' : (rowData.S_num ? rowData.S_num + 'S' : null);
+      if (sId && vesselTanks[sId]) {
+        appendTankCard(rowEl, sId);
       } else {
         const placeholder = document.createElement('div');
         placeholder.className = 'tank-placeholder';
@@ -1444,8 +1479,9 @@ function renderVesselGrid() {
       rowEl.className = 'vessel-row row-ps';
       
       // Port
-      if (rowData.P) {
-        appendTankCard(rowEl, r + 'P');
+      const pId = isSlop ? 'SlopP' : (rowData.P_num ? rowData.P_num + 'P' : null);
+      if (pId && vesselTanks[pId]) {
+        appendTankCard(rowEl, pId);
       } else {
         const placeholder = document.createElement('div');
         placeholder.className = 'tank-placeholder';
@@ -1453,8 +1489,9 @@ function renderVesselGrid() {
       }
       
       // Starboard
-      if (rowData.S) {
-        appendTankCard(rowEl, r + 'S');
+      const sId = isSlop ? 'SlopS' : (rowData.S_num ? rowData.S_num + 'S' : null);
+      if (sId && vesselTanks[sId]) {
+        appendTankCard(rowEl, sId);
       } else {
         const placeholder = document.createElement('div');
         placeholder.className = 'tank-placeholder';
@@ -2610,15 +2647,29 @@ function applyDefaultPresetOnLoad() {
         chkSlops.checked = !!vesselLayout.includeSlops;
       }
       
-      // Make sure rowsData exists
-      if (!vesselLayout.rowsData) {
+      // Make sure rowsData exists in new format
+      if (vesselLayout.rowsData && vesselLayout.rowsData.length > 0) {
+        const first = vesselLayout.rowsData[0];
+        if (first.row !== 'Slop' && first.P !== undefined) {
+          // Upgrade old P/C/S structure to P_num/C_num/S_num
+          vesselLayout.rowsData = vesselLayout.rowsData.map(item => {
+            if (item.row === 'Slop') return item;
+            return {
+              row: item.row,
+              P_num: item.P ? item.row : null,
+              C_num: item.C ? item.row : null,
+              S_num: item.S ? item.row : null
+            };
+          });
+        }
+      } else {
         vesselLayout.rowsData = [];
         for (let r = 1; r <= vesselLayout.rows; r++) {
           vesselLayout.rowsData.push({
             row: r,
-            P: !!vesselTanks[r + 'P'],
-            C: !!vesselTanks[r + 'C'],
-            S: !!vesselTanks[r + 'S']
+            P_num: vesselTanks[r + 'P'] ? r : null,
+            C_num: vesselTanks[r + 'C'] ? r : null,
+            S_num: vesselTanks[r + 'S'] ? r : null
           });
         }
         if (vesselLayout.includeSlops) {
@@ -2650,7 +2701,7 @@ function applyDefaultPresetOnLoad() {
     rowsData: []
   };
   for (let r = 1; r <= 9; r++) {
-    vesselLayout.rowsData.push({ row: r, P: true, C: false, S: true });
+    vesselLayout.rowsData.push({ row: r, P_num: r, C_num: null, S_num: r });
   }
   const selectPreset = document.getElementById('vessel-preset');
   if (selectPreset) selectPreset.value = 'preset-18';
