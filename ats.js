@@ -99,7 +99,7 @@ const T = {
     tab_certs: '📜 CERTIFICATES',
     lbl_vessel_config: 'VESSEL CONFIGURATION & PARAMETERS',
     lbl_presets: 'Vessel Presets',
-    lbl_total_holds: 'Total Cargo Holds (Rows: 1-16)',
+    lbl_total_holds: 'Total Cargo Holds (Rows: 1-20)',
     lbl_include_slops: 'Include Aft Slop Tanks (Slop P / Slop S)',
     lbl_schematic_builder: 'FLEXIBLE TANK SCHEMATIC BUILDER',
     lbl_schematic_desc: 'Enable/disable Port, Center, or Starboard tanks for each hold row to match your exact Certificate of Fitness.',
@@ -175,7 +175,7 @@ const T = {
     tab_certs: '📜 SERTİFİKALAR',
     lbl_vessel_config: 'GEMİ KONFİGÜRASYONU VE PARAMETRELERİ',
     lbl_presets: 'Hazır Gemi Şablonları',
-    lbl_total_holds: 'Toplam Kargo Tankı Sayısı (Sıra: 1-16)',
+    lbl_total_holds: 'Toplam Kargo Ambarı Sayısı (Sıra: 1-20)',
     lbl_include_slops: 'Aft Slop Tanklarını Dahil Et (Slop P / Slop S)',
     lbl_schematic_builder: 'ESNEK TANK ŞABLON OLUŞTURUCU',
     lbl_schematic_desc: 'Geminizin Uygunluk Sertifikasına (CoF) tam uyması için her bir sıra için İskele (P), Merkez (C) veya Sancak (S) tanklarını açın/kapatın.',
@@ -251,7 +251,7 @@ const T = {
     tab_certs: '📜 CERTIFICADOS',
     lbl_vessel_config: 'CONFIGURACIÓN Y PARÁMETROS DEL BUQUE',
     lbl_presets: 'Preajustes del Buque',
-    lbl_total_holds: 'Total de Tanques de Carga (Filas: 1-16)',
+    lbl_total_holds: 'Total de Tanques de Carga (Filas: 1-20)',
     lbl_include_slops: 'Incluir tanques de decantación de popa (Slop P / Slop S)',
     lbl_schematic_builder: 'CREADOR FLEXIBLE DE ESQUEMA DE TANQUES',
     lbl_schematic_desc: 'Active o desactive los tanques de babor (P), centro (C) o estribor (S) para cada fila a fin de coincidir con su Certificado de Aptitud.',
@@ -327,7 +327,7 @@ const T = {
     tab_certs: '📜 ΠΙΣΤΟΠΟΙΗΤΙΚΑ',
     lbl_vessel_config: 'ΔΙΑΜΟΡΦΩΣΗ & ΠΑΡΑΜΕΤΡΟΙ ΠΛΟΙΟΥ',
     lbl_presets: 'Πρότυπα Πλοίου',
-    lbl_total_holds: 'Σύνολο Δεξαμενών Φορτίου (Σειρές: 1-16)',
+    lbl_total_holds: 'Σύνολο Δεξαμενών Φορτίου (Σειρές: 1-20)',
     lbl_include_slops: 'Συμπερίληψη Δεξαμενών Slop (Slop P / Slop S)',
     lbl_schematic_builder: 'ΕΥΕΛΙΚΤΟΣ ΣΧΕΔΙΑΣΤΗΣ ΔΕΞΑΜΕΝΩΝ',
     lbl_schematic_desc: 'Ενεργοποιήστε/απενεργοποιήστε τις δεξαμενές αριστερά (P), κέντρο (C) ή δεξιά (S) για κάθε σειρά ώστε να ταιριάζει με το Πιστοποιητικό Καταλληλότητας.',
@@ -403,7 +403,7 @@ const T = {
     tab_certs: '📜 СЕРТИФИКАТЫ',
     lbl_vessel_config: 'КОНФИГУРАЦИЯ И ПАРАМЕТРЫ СУДНА',
     lbl_presets: 'Шаблоны Судов',
-    lbl_total_holds: 'Всего Грузовых Танков (Ряды: 1-16)',
+    lbl_total_holds: 'Всего Грузовых Танков (Ряды: 1-20)',
     lbl_include_slops: 'Включить кормовые слоп-танки (Slop P / Slop S)',
     lbl_schematic_builder: 'ГИБКИЙ КОНСТРУКТОР ТАНКОВ',
     lbl_schematic_desc: 'Включайте или отключайте Левый (P), Средний (C) или Правый (S) танк для каждого ряда в соответствии с вашим Свидетельством о годности судна (CoF).',
@@ -480,7 +480,7 @@ const T = {
     tab_certs: '📜 验舱证书',
     lbl_vessel_config: '船舶配置与参数',
     lbl_presets: '预设船舶类型',
-    lbl_total_holds: '货物舱室总数 (排数: 1-16)',
+    lbl_total_holds: '货物舱室总数 (排数: 1-20)',
     lbl_include_slops: '包含尾部残油舱 (Slop P / Slop S)',
     lbl_schematic_builder: '灵活舱室图纸定制器',
     lbl_schematic_desc: '为您在每个货舱排中启用或禁用左舷 (P)、中央 (C) 或右舷 (S) 储罐，以匹配您的适装证书 (Certificate of Fitness)。',
@@ -1138,14 +1138,35 @@ function applyVesselPreset() {
   }
   customFields.classList.add('hidden');
   
-  const targetRows = isDemoUser ? 4 : 9;
+  let targetRows = 9;
+  if (preset === 'preset-32' || preset === 'preset-48') {
+    targetRows = isDemoUser ? 4 : 16;
+  } else if (preset === 'preset-18' || preset === 'preset-26') {
+    targetRows = isDemoUser ? 4 : 9;
+  }
+
   if (isDemoUser) {
     showError(lang === 'tr' ? 'Demo hesapları maksimum 4 hold ile sınırlandırılmıştır.' : 'Demo accounts are capped at a maximum of 4 holds.');
   } else {
     hideError();
   }
 
-  if (preset === 'preset-18') {
+  if (preset === 'preset-32') {
+    vesselLayout.rows = targetRows;
+    vesselLayout.preset = 'preset-32';
+    vesselLayout.rowsData = [];
+    for (let r = 1; r <= targetRows; r++) {
+      vesselLayout.rowsData.push({ row: r, P_num: r, C_num: null, S_num: r });
+    }
+  } else if (preset === 'preset-48') {
+    vesselLayout.rows = targetRows;
+    vesselLayout.preset = 'preset-48';
+    vesselLayout.rowsData = [];
+    for (let r = 1; r <= targetRows; r++) {
+      const hasC = (r !== 1 && r !== targetRows);
+      vesselLayout.rowsData.push({ row: r, P_num: r, C_num: hasC ? r : null, S_num: r });
+    }
+  } else if (preset === 'preset-18') {
     vesselLayout.rows = targetRows;
     vesselLayout.preset = 'preset-18';
     vesselLayout.rowsData = [];
@@ -1199,9 +1220,9 @@ function onCustomRowsChange() {
     numRows = 4;
     showError(lang === 'tr' ? 'Demo hesapları maksimum 4 hold ile sınırlandırılmıştır.' : 'Demo accounts are capped at a maximum of 4 holds.');
     rowsInput.value = 4;
-  } else if (numRows > 16) {
-    numRows = 16;
-    rowsInput.value = 16;
+  } else if (numRows > 20) {
+    numRows = 20;
+    rowsInput.value = 20;
   } else {
     hideError();
   }
@@ -1209,6 +1230,10 @@ function onCustomRowsChange() {
   vesselLayout.rows = numRows;
   vesselLayout.preset = 'custom';
   
+  // Force update the preset dropdown to custom
+  const selectPreset = document.getElementById('vessel-preset');
+  if (selectPreset) selectPreset.value = 'custom';
+
   const currentRowsData = vesselLayout.rowsData || [];
   const newRowsData = [];
   for (let r = 1; r <= numRows; r++) {
@@ -2693,21 +2718,28 @@ function applyDefaultPresetOnLoad() {
     }
   }
   
-  // Default to preset-18
+  // Fallback defaults if no localStorage exists
+  const initialRows = isDemoUser ? 4 : 16;
+  const initialPreset = isDemoUser ? 'preset-18' : 'preset-32';
+  
   vesselLayout = {
-    rows: 9,
-    preset: 'preset-18',
-    includeSlops: false,
+    rows: initialRows,
+    preset: initialPreset,
+    includeSlops: !isDemoUser,
     rowsData: []
   };
-  for (let r = 1; r <= 9; r++) {
+  for (let r = 1; r <= initialRows; r++) {
     vesselLayout.rowsData.push({ row: r, P_num: r, C_num: null, S_num: r });
   }
+  if (!isDemoUser) {
+    vesselLayout.rowsData.push({ row: 'Slop', P: true, C: false, S: true, isSlop: true });
+  }
+  
   const selectPreset = document.getElementById('vessel-preset');
-  if (selectPreset) selectPreset.value = 'preset-18';
+  if (selectPreset) selectPreset.value = initialPreset;
   
   const chkSlops = document.getElementById('vessel-include-slops');
-  if (chkSlops) chkSlops.checked = false;
+  if (chkSlops) chkSlops.checked = !isDemoUser;
   
   renderRowConfigInputs();
   rebuildVesselFromConfigs();

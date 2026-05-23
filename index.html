@@ -125,8 +125,10 @@
             <div class="field-group">
               <label class="field-label" data-translate="lbl_presets">Vessel Presets</label>
               <select class="select-input" id="vessel-preset" onchange="applyVesselPreset()">
+                <option value="preset-32">32-Tank Large Chemical Carrier (P/S, 16 Holds)</option>
+                <option value="preset-48">48-Tank Large Chemical Carrier (P/C/S, 16 Holds)</option>
                 <option value="preset-18">18-Tank MR Chemical Carrier (P/S, 9 Holds)</option>
-                <option value="preset-26">26-Tank Chemical Carrier (P/C/S, 9 Holds)</option>
+                <option value="preset-26">26-Tank MR Chemical Carrier (P/C/S, 9 Holds)</option>
                 <option value="custom">Custom Hull Configuration...</option>
               </select>
             </div>
@@ -140,8 +142,8 @@
             <!-- Custom Grid Rows Count -->
             <div class="builder-custom-fields hidden" id="custom-builder-fields" style="margin-top: 15px;">
               <div class="field-group" style="margin-bottom: 12px;">
-                <label class="field-label" data-translate="lbl_total_holds">Total Cargo Holds (Rows: 1-16)</label>
-                <input type="number" id="custom-rows" class="settings-input" value="6" min="1" max="16" onchange="onCustomRowsChange()">
+                <label class="field-label" data-translate="lbl_total_holds">Total Cargo Holds (Rows: 1-20)</label>
+                <input type="number" id="custom-rows" class="settings-input" value="16" min="1" max="20" onchange="onCustomRowsChange()">
               </div>
             </div>
 
