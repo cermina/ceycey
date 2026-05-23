@@ -71,5 +71,13 @@
       <p class="terms-p" style="font-size: 0.8rem; color: var(--text3);">Last updated: May 2026 · ASTRID ATS © 2026 Q3 Astrid Maritime Technology</p>
     </div>
   </main>
+  <script>
+    const theme = localStorage.getItem('ats_theme') || 'dark';
+    if (theme === 'light') {
+      document.body.classList.add('light-mode');
+    } else if (theme === 'night') {
+      document.body.classList.add('night-mode');
+    }
+  </script>
 </body>
 </html>

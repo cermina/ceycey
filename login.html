@@ -220,7 +220,10 @@
     }
 
     checkSession();
-    if (localStorage.getItem('ats_theme') === 'night') {
+    const theme = localStorage.getItem('ats_theme') || 'dark';
+    if (theme === 'light') {
+      document.body.classList.add('light-mode');
+    } else if (theme === 'night') {
       document.body.classList.add('night-mode');
     }
 

@@ -2121,6 +2121,10 @@ function calculateFleetProtocols() {
   });
   
   if (totalTanksPlanned === 0) {
+    const errorMsg = lang === 'tr' 
+      ? 'Simülasyon başlatılamadı!\n\nLütfen sol taraftaki gemi şemasından bir tanka tıklayın ve Tank Editöründen en az bir tank için "Last Cargo" (Önceki Yük) ve "Next Cargo" (Sonraki Yük) seçimi yapın.'
+      : 'Simulation could not be started!\n\nPlease click on a tank from the ship schematic on the left and select "Last Cargo" and "Next Cargo" for at least one tank in the Tank Editor.';
+    alert(errorMsg);
     showError(lang === 'tr' ? 'Lütfen en az bir tank için Last/Next Cargo planlayın.' : 'Please configure Last/Next Cargo for at least one tank.');
     return;
   }
@@ -2813,6 +2817,15 @@ function switchDashboardTab(tabId) {
   
   const btn = document.getElementById('btn-' + tabId);
   if (btn) btn.classList.add('active');
+
+  // Reset scroll position of the panel contents to top
+  const tabContents = document.querySelector('.tab-contents');
+  if (tabContents) {
+    tabContents.scrollTop = 0;
+  }
+
+  // Smooth scroll window to top for smaller screen responsiveness
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function printSingleCertificate(tankId) {

@@ -101,7 +101,10 @@
     <p style="font-size: 0.8rem; color: var(--text3);">Astrid ATS © 2026 Q3 · Flat annual billing per vessel · Enterprise SLA integrations available</p>
   </main>
   <script>
-    if (localStorage.getItem('ats_theme') === 'night') {
+    const theme = localStorage.getItem('ats_theme') || 'dark';
+    if (theme === 'light') {
+      document.body.classList.add('light-mode');
+    } else if (theme === 'night') {
       document.body.classList.add('night-mode');
     }
   </script>
