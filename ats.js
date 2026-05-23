@@ -1108,6 +1108,19 @@ function setupInputListeners() {
       el.addEventListener('change', () => validateEditorInput(which));
     }
   });
+
+  const settingIds = [
+    'vessel-name', 'vessel-imo', 'officer-name', 'company-logo',
+    'coeff-fuel', 'coeff-slop', 'coeff-fw', 'coeff-detergent',
+    'coeff-flow', 'coeff-eff', 'coeff-temp', 'coeff-sea-temp'
+  ];
+  settingIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', saveSettingsState);
+      el.addEventListener('change', saveSettingsState);
+    }
+  });
 }
 
 function validateEditorInput(which) {
@@ -2185,8 +2198,11 @@ function calculateFleetProtocols() {
   const vName = document.getElementById('vessel-name').value || 'ASTRID SPIRIT';
   const vImo = document.getElementById('vessel-imo').value || '9876543';
   const vOff = document.getElementById('officer-name').value || 'C/O Ahmet Yilmaz';
-  document.getElementById('print-vessel-name').textContent = vName.toUpperCase();
-  document.getElementById('print-vessel-meta').textContent = `IMO ${vImo} | Chief Officer: ${vOff}`;
+  
+  const elPrintVesselName = document.getElementById('print-vessel-name');
+  if (elPrintVesselName) elPrintVesselName.textContent = vName.toUpperCase();
+  const elPrintVesselMeta = document.getElementById('print-vessel-meta');
+  if (elPrintVesselMeta) elPrintVesselMeta.textContent = `IMO ${vImo} | Chief Officer: ${vOff}`;
   
   switchDashboardTab('tab-eco');
 }
@@ -2232,7 +2248,7 @@ function translateProcedureTitle(proc, targetLang) {
 
 function translateProcedureText(text, targetLang) {
   if (!text) return '';
-  if (targetLang === 'tr') return text; // Handled by procedures.json tr fields if available, otherwise tr string passed
+  // For Turkish, we will run the translation glossary engine to translate English steps to Turkish
   if (targetLang === 'en') return text;
   
   const lines = text.split('\n');
@@ -2241,6 +2257,58 @@ function translateProcedureText(text, targetLang) {
     const numMatch = line.match(/^(STEP|ADIM)\s*(\d+)/i);
     const stepNum = numMatch ? numMatch[2] : '';
     const prefix = T[targetLang].step_prefix || 'STEP';
+    
+    if (targetLang === 'tr') {
+      const trGlossary = {
+        "Confirm gas-free status and strip all cargo residues completely.": "Gazdan arındırılmış durumu doğrulayın ve tüm yük kalıntılarını tamamen tahliye edin.",
+        "Ensure tank is fully stripped of cargo.": "Tankın yükten tamamen arındırıldığından emin olun.",
+        "Strip tank completely.": "Tankı tamamen tahliye edin.",
+        "Strip tank, lines and manifolds fully dry.": "Tankı, devreleri ve manifoldları tamamen kuruyana kadar tahliye edin.",
+        "Strip tank completely dry.": "Tankı tamamen kurulayana kadar tahliye edin.",
+        "Strip all cargo lines, crossovers and manifolds.": "Tüm yük devrelerini, crossover'ları ve manifoldları tahliye edin.",
+        "Strip all wash water to slop tank or reception facility.": "Tüm yıkama suyunu slop tankına veya liman kabul tesisine tahliye edin.",
+        "Strip all wash water to slop tank or designated reception.": "Tüm yıkama suyunu slop tankına veya belirlenmiş kabul tesisine tahliye edin.",
+        "Strip wash water completely to slop tank or designated reception.": "Yıkama suyunu tamamen slop tankına veya belirlenmiş kabul tesisine tahliye edin.",
+        "Strip wash water completely.": "Yıkama suyunu tamamen tahliye edin.",
+        "Strip completely. Re-inspect all areas.": "Tamamen tahliye edin. Tüm alanları yeniden denetleyin.",
+        "Strip completely to slop. Inspect for residues.": "Tamamen slop tankına tahliye edin. Kalıntıları denetleyin.",
+        "Visual inspection of tank bottom and pump sump.": "Tank tabanının ve pompa kuyusunun (sump) görsel denetimi.",
+        "Inspect pump sumps, heating coil connections, and tank bottom for residues.": "Pompa kuyularını, ısıtma serpantini bağlantılarını ve tank tabanını kalıntılar için denetleyin.",
+        "Visual inspection of tank bottom and pump sump. No significant residue should remain.": "Tank tabanının ve pompa kuyusunun görsel denetimi. Önemli bir kalıntı kalmamalıdır.",
+        "Special protocol for hazardous or toxic chemical residues. Mandatory prewash before port entry. Strict waste disposal. Specialized PPE.": "Tehlikeli veya toksik kimyasal kalıntılar için özel protokol. Limana girişten önce zorunlu ön yıkama. Sıkı atık bertarafı. Özel KKD.",
+        "Ultra-high standard for inspection-grade requirements. All stages documented. Multi-stage hot water washing. Surveyor inspection. Wall-wash test required.": "Sörvey denetim gereksinimleri için ultra yüksek standart. Tüm aşamalar belgelenir. Çok aşamalı sıcak su yıkaması. Sörveyör denetimi. Duvar yıkama testi (Wall-wash) gereklidir.",
+        "Standard product tanker cleaning. Hot water wash with full tank internal attention. Line and manifold cleaning integral. Clean petroleum loading preparation.": "Standart ürün tankeri temizliği. Tam tank içi temizlik ile sıcak su yıkaması. Entegre devre ve manifold temizliği. Temiz petrol yükleme hazırlığı."
+      };
+      
+      if (trGlossary[clean]) {
+        return `${prefix} ${stepNum}: ${trGlossary[clean]}`;
+      }
+      
+      const flushMatch = clean.match(/Flush all cargo lines, manifolds and crossovers with wash water for (\d+) minutes\./i);
+      if (flushMatch) {
+        return `${prefix} ${stepNum}: Tüm yük devrelerini, crossover'ları ve manifoldları ${flushMatch[1]} dakika boyunca yıkama suyu ile yıkayın.`;
+      }
+      const coldFWMatch = clean.match(/Cold fresh water final rinse (\d+)-(\d+) minutes\.\s*Strip dry\./i) || clean.match(/Cold fresh water final rinse (\d+)-(\d+) minutes\.\n?Strip dry\./i);
+      if (coldFWMatch) {
+        return `${prefix} ${stepNum}: Soğuk tatlı su ile son durulama ${coldFWMatch[1]}-${coldFWMatch[2]} dakika. Kuruyana kadar tahliye edin.`;
+      }
+      const ventMatch = clean.match(/Ventilate minimum (\d+) hours\.\s*Confirm safe atmosphere before entry\./i);
+      if (ventMatch) {
+        return `${prefix} ${stepNum}: En az ${ventMatch[1]} saat havalandırın. Girişten önce güvenli atmosferi doğrulayın.`;
+      }
+      const tempDurMatch = clean.match(/Temperature range:\s*([\w\-]+)°C\.\s*Duration:\s*(\d+)-(\d+)\s*minutes\./i);
+      if (tempDurMatch) {
+        return `${prefix} ${stepNum}: Sıcaklık aralığı: ${tempDurMatch[1]}°C. Süre: ${tempDurMatch[2]}-${tempDurMatch[3]} dakika.`;
+      }
+      const tempDurSingleMatch = clean.match(/Temperature range:\s*([\w\-]+)°C\.\s*Duration:\s*(\d+)\s*minutes\./i);
+      if (tempDurSingleMatch) {
+        return `${prefix} ${stepNum}: Sıcaklık aralığı: ${tempDurSingleMatch[1]}°C. Süre: ${tempDurSingleMatch[2]} dakika.`;
+      }
+      const tempVariesMatch = clean.match(/Temperature range:\s*varies\.\s*Duration:\s*(\d+)-(\d+)\s*minutes\./i);
+      if (tempVariesMatch) {
+        return `${prefix} ${stepNum}: Sıcaklık aralığı: değişken. Süre: ${tempVariesMatch[1]}-${tempVariesMatch[2]} dakika.`;
+      }
+    }
     
     const lineGlossary = {
       "Confirm gas-free status and strip all cargo residues completely.": {
@@ -2418,19 +2486,19 @@ function translateProcedureText(text, targetLang) {
     
     let wordsTranslated = clean;
     const wordGlossary = {
-      "STEP": { es: "PASO", el: "ΒΗΜΑ", ru: "ШАГ", zh: "步骤" },
-      "minutes": { es: "minutos", el: "λεπτά", ru: "минут", zh: "分钟" },
-      "minute": { es: "minuto", el: "λεπτό", ru: "минута", zh: "分钟" },
-      "mins": { es: "minutos", el: "λεπτά", ru: "минут", zh: "分钟" },
-      "hours": { es: "horas", el: "ώρες", ru: "часов", zh: "小时" },
-      "hour": { es: "hora", el: "ώρα", ru: "час", zh: "小时" },
-      "wash": { es: "lavado", el: "πλύση", ru: "мойка", zh: "清洗" },
-      "rinse": { es: "enjuague", el: "ξέπλυμα", ru: "ополаскивание", zh: "冲洗" },
-      "seawater": { es: "agua de mar", el: "θαλασσινό νερό", ru: "морская вода", zh: "海水" },
-      "fresh water": { es: "agua dulce", el: "γλυκό νερό", ru: "пресная вода", zh: "淡水" },
-      "hot water": { es: "agua caliente", el: "ζεστό νερό", ru: "горячая вода", zh: "热水" },
-      "cold water": { es: "agua fría", el: "κρύο νερό", ru: "холодная вода", zh: "冷水" },
-      "ventilate": { es: "ventilar", el: "αερίστε", ru: "вентилировать", zh: "通风" }
+      "STEP": { es: "PASO", el: "ΒΗΜΑ", ru: "ШАГ", zh: "步骤", tr: "ADIM" },
+      "minutes": { es: "minutos", el: "λεπτά", ru: "минут", zh: "分钟", tr: "dakika" },
+      "minute": { es: "minuto", el: "λεπτό", ru: "минута", zh: "分钟", tr: "dakika" },
+      "mins": { es: "minutos", el: "λεπτά", ru: "минут", zh: "分钟", tr: "dakika" },
+      "hours": { es: "horas", el: "ώρες", ru: "часов", zh: "小时", tr: "saat" },
+      "hour": { es: "hora", el: "ώρα", ru: "час", zh: "小时", tr: "saat" },
+      "wash": { es: "lavado", el: "πλύση", ru: "мойка", zh: "清洗", tr: "yıkama" },
+      "rinse": { es: "enjuague", el: "ξέπλυμα", ru: "ополаскивание", zh: "冲洗", tr: "durulama" },
+      "seawater": { es: "agua de mar", el: "θαλασσινό νερό", ru: "морская вода", zh: "海水", tr: "deniz suyu" },
+      "fresh water": { es: "agua dulce", el: "γλυκό νερό", ru: "пресная вода", zh: "淡水", tr: "tatlı su" },
+      "hot water": { es: "agua caliente", el: "ζεστό νερό", ru: "горячая вода", zh: "热水", tr: "sıcak su" },
+      "cold water": { es: "agua fría", el: "κρύο νερό", ru: "холодная вода", zh: "冷水", tr: "soğuk su" },
+      "ventilate": { es: "ventilar", el: "αερίστε", ru: "вентилировать", zh: "通风", tr: "havalandırın" }
     };
     
     Object.entries(wordGlossary).forEach(([enWord, langObj]) => {
@@ -2447,10 +2515,29 @@ function translateProcedureText(text, targetLang) {
 
 function translateSafetyNote(note, targetLang) {
   if (!note) return '';
-  if (targetLang === 'tr') return note;
   if (targetLang === 'en') return note;
   
   const clean = note.trim();
+  if (targetLang === 'tr') {
+    const trNoteGlossary = {
+      "High temperature burn hazard. No personnel in tank during operation.": "Yüksek sıcaklık yanma tehlikesi. Operasyon sırasında tankta personel bulunmamalıdır.",
+      "MARPOL Category X/Y. Prewash mandatory. Port reception required. Notify port authorities.": "MARPOL Kategori X/Y. Ön yıkama zorunludur. Liman atık alım tesisi gereklidir. Liman yetkililerine bildirin.",
+      "Chemical compatibility check mandatory. PPE required.": "Kimyasal uyumluluk kontrolü zorunludur. KKD gereklidir.",
+      "Independent surveyor required. Wall-wash mandatory before loading.": "Bağımsız sörveyör gereklidir. Yüklemeden önce duvar yıkama testi (Wall-wash) zorunludur.",
+      "Monitor tank temperature. Ensure gas-free before entry.": "Tank sıcaklığını izleyin. Girişten önce gazdan arındırılmış (gas-free) olduğundan emin olun.",
+      "Prepare for wall-wash inspection. Independent surveyor may be required.": "Duvar yıkama testi (Wall-wash) denetimine hazırlanın. Bağımsız sörveyör gerekebilir.",
+      "ISGOTT compliance required. COQ preparation may be needed.": "ISGOTT uyumluluğu gereklidir. COQ (Kalite Belgesi) hazırlığı gerekebilir.",
+      "Superintendent inspection required. Certificate of fitness may be required.": "Enspektör denetimi gereklidir. Uygunluk belgesi (CoF) gerekebilir.",
+      "Test for nitrogen/amine traces if next cargo is sensitive. pH monitoring.": "Sonraki yük hassassa azot/amin kalıntıları için test edin. pH izleme.",
+      "Specialist chemical knowledge required. MSDS on board. pH verification mandatory.": "Uzman kimyasal bilgisi gereklidir. MSDS gemide olmalıdır. pH doğrulaması zorunludur.",
+      "Chloride test of final wash water recommended.": "Son yıkama suyunun klorür testi yapılması önerilir.",
+      "FOSFA/NIOP standards for edible oils. Tank certified for food-grade. No zinc or lead paints.": "Yemeklik yağlar için FOSFA/NIOP standartları. Tank gıda sınıfı için sertifikalandırılmalıdır. Çinko veya kurşun boya kullanılmamalıdır.",
+      "Monitor temperature continuously. Do not exceed coating temperature limit.": "Sıcaklığı sürekli izleyin. Kaplama sıcaklık sınırını aşmayın.",
+      "Oil residue to slop per MARPOL Annex I.": "MARPOL Ek I uyarınca slop tankına yağ kalıntısı tahliyesi.",
+      "Continuous temperature monitoring mandatory. Deviation may damage coating.": "Sürekli sıcaklık izleme zorunludur. Sapma olması kaplamaya zarar verebilir."
+    };
+    return trNoteGlossary[clean] || clean;
+  }
   const noteGlossary = {
     "High temperature burn hazard. No personnel in tank during operation.": {
       es: "Peligro de quemaduras por alta temperatura. No permitir personal en el tanque durante la operación.",
@@ -2559,31 +2646,69 @@ function appendTankProtocolCard(id, tank, proc, code, parsed, waterVol, fuelMT, 
   
   const title = translateProcedureTitle(proc, lang);
   const rawInstructions = proc.instructions;
-  const translatedInst = translateProcedureText(rawInstructions, lang);
+  const translatedInst = (lang === 'tr' && proc.instructions_tr)
+    ? proc.instructions_tr
+    : translateProcedureText(rawInstructions, lang);
   
   const stepsList = translatedInst.split(/\n/).filter(s => s.trim()).map((stepLine, i) => {
     const cleanLine = stepLine.replace(/^(STEP|ADIM|PASO|ΒΗΜΑ|ШАГ|步骤)\s*\d+:\s*/i, '').trim();
     const numMatch = stepLine.match(/^(STEP|ADIM|PASO|ΒΗΜΑ|ШАГ|步骤)\s*(\d+)/i);
     const stepNum = numMatch ? numMatch[2] : String(i+1);
     const stepPrefix = T[lang].step_prefix || 'STEP';
+    
+    // Fetch time sheet data
+    const timeData = (tank.timeSheet && tank.timeSheet[i]) || { commenced: '', completed: '', remarks: '' };
+    
+    // Localized labels
+    const logTimeVal = lang === 'tr' ? 'ZAMAN RAPORU:' : (lang === 'es' ? 'REGISTRO DE TIEMPO:' : (lang === 'el' ? 'ΚΑΤΑΓΡΑΦΗ ΧΡΟΝΟΥ:' : (lang === 'ru' ? 'ЛОГ ВРЕМЕНИ:' : (lang === 'zh' ? '时间日志:' : 'LOG TIME:'))));
+    const commencedVal = lang === 'tr' ? 'Başlangıç:' : (lang === 'es' ? 'Comenzó:' : (lang === 'el' ? 'Έναρξη:' : (lang === 'ru' ? 'Начало:' : (lang === 'zh' ? '开始:' : 'Commenced:'))));
+    const completedVal = lang === 'tr' ? 'Bitiş:' : (lang === 'es' ? 'Completado:' : (lang === 'el' ? 'Ολοκλήρωση:' : (lang === 'ru' ? 'Заverşeno:' : (lang === 'zh' ? '完成:' : 'Completed:'))));
+    const remarksVal = lang === 'tr' ? 'Açıklama:' : (lang === 'es' ? 'Observaciones:' : (lang === 'el' ? 'Παρατηρήσεις:' : (lang === 'ru' ? 'Примечания:' : (lang === 'zh' ? '备注:' : 'Remarks:'))));
+
     return `
-      <div class="step-card" style="margin-top: 8px;">
-        <div class="step-num-col" style="padding: 12px 0;"><div class="step-num-text">${stepPrefix} ${stepNum}</div></div>
-        <div class="step-body" style="padding: 12px 16px; font-size: 0.85rem;">${cleanLine}</div>
+      <div class="step-card">
+        <div class="step-top-row">
+          <div class="step-num-col"><div class="step-num-text">${stepPrefix} ${stepNum}</div></div>
+          <div class="step-body">${cleanLine}</div>
+        </div>
+        <div class="step-timesheet">
+          <span class="timesheet-label">${logTimeVal}</span>
+          <div class="timesheet-field">
+            <label>${commencedVal}</label>
+            <input type="text" class="timesheet-input" placeholder="e.g. 17:12" value="${timeData.commenced}" oninput="updateTimeSheet('${id}', ${i}, 'commenced', this.value)">
+          </div>
+          <div class="timesheet-field">
+            <label>${completedVal}</label>
+            <input type="text" class="timesheet-input" placeholder="e.g. 19:36" value="${timeData.completed}" oninput="updateTimeSheet('${id}', ${i}, 'completed', this.value)">
+          </div>
+          <div class="timesheet-field remarks-field">
+            <label>${remarksVal}</label>
+            <input type="text" class="timesheet-input" placeholder="e.g. residues stripped" value="${timeData.remarks}" oninput="updateTimeSheet('${id}', ${i}, 'remarks', this.value)">
+          </div>
+        </div>
       </div>
     `;
   }).join('');
   
   const safetyRaw = proc.safety_note;
-  const safety = translateSafetyNote(safetyRaw, lang);
+  const safety = (lang === 'tr' && proc.safety_note_tr)
+    ? proc.safety_note_tr
+    : translateSafetyNote(safetyRaw, lang);
   
+  const btnPrintVal = lang === 'tr' ? '🖨️ RAPORU YAZDIR' : (lang === 'es' ? '🖨️ IMPRIMIR RAPORTE' : (lang === 'el' ? '🖨️ ΕΚΤΥΠΩΣΗ' : (lang === 'ru' ? '🖨️ ПЕЧАТЬ ЛОГА' : (lang === 'zh' ? '🖨️ 打印日志' : '🖨️ PRINT LOG'))));
+
   card.innerHTML = `
-    <div class="tank-prot-header">
+    <div class="tank-prot-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
       <div class="tank-prot-meta">
         <span class="tank-prot-tag">TANK ${id}</span>
         <span class="tank-prot-cargo-seq">${tank.lastCargoName} ➡️ ${tank.nextCargoName}</span>
       </div>
-      <span class="tank-prot-code">${code} (${title})</span>
+      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+        <span class="tank-prot-code" style="font-size: 0.65rem; color: var(--text3);">${code} (${title})</span>
+        <button class="timesheet-print-btn" onclick="printTimeSheet('${id}')" style="background: rgba(37,99,235,0.12); color: var(--accent); border: 1px solid var(--border); border-radius: 4px; padding: 4px 10px; font-family: var(--mono); font-size: 0.65rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">
+          ${btnPrintVal}
+        </button>
+      </div>
     </div>
     
     <div class="intensity-row" style="margin-bottom: 16px; padding: 8px 12px;">
@@ -2689,6 +2814,7 @@ function appendWWTCard(id, tank) {
 
 // ---- STATE PERSISTENCE ----
 function applyDefaultPresetOnLoad() {
+  loadSettingsState();
   const savedLayout = localStorage.getItem('ats_vessel_layout');
   const savedTanks = localStorage.getItem('ats_vessel_tanks');
   
@@ -2787,6 +2913,47 @@ function applyDefaultPresetOnLoad() {
 function saveVesselState() {
   localStorage.setItem('ats_vessel_layout', JSON.stringify(vesselLayout));
   localStorage.setItem('ats_vessel_tanks', JSON.stringify(vesselTanks));
+}
+
+function saveSettingsState() {
+  const settings = {
+    vesselName: document.getElementById('vessel-name')?.value || '',
+    vesselImo: document.getElementById('vessel-imo')?.value || '',
+    officerName: document.getElementById('officer-name')?.value || '',
+    companyLogo: document.getElementById('company-logo')?.value || '',
+    coeffFuel: document.getElementById('coeff-fuel')?.value || '',
+    coeffSlop: document.getElementById('coeff-slop')?.value || '',
+    coeffFw: document.getElementById('coeff-fw')?.value || '',
+    coeffDetergent: document.getElementById('coeff-detergent')?.value || '',
+    coeffFlow: document.getElementById('coeff-flow')?.value || '',
+    coeffEff: document.getElementById('coeff-eff')?.value || '',
+    coeffTemp: document.getElementById('coeff-temp')?.value || '',
+    coeffSeaTemp: document.getElementById('coeff-sea-temp')?.value || ''
+  };
+  localStorage.setItem('ats_settings', JSON.stringify(settings));
+}
+
+function loadSettingsState() {
+  const savedSettings = localStorage.getItem('ats_settings');
+  if (savedSettings) {
+    try {
+      const settings = JSON.parse(savedSettings);
+      if (settings.vesselName !== undefined && document.getElementById('vessel-name')) document.getElementById('vessel-name').value = settings.vesselName;
+      if (settings.vesselImo !== undefined && document.getElementById('vessel-imo')) document.getElementById('vessel-imo').value = settings.vesselImo;
+      if (settings.officerName !== undefined && document.getElementById('officer-name')) document.getElementById('officer-name').value = settings.officerName;
+      if (settings.companyLogo !== undefined && document.getElementById('company-logo')) document.getElementById('company-logo').value = settings.companyLogo;
+      if (settings.coeffFuel !== undefined && document.getElementById('coeff-fuel')) document.getElementById('coeff-fuel').value = settings.coeffFuel;
+      if (settings.coeffSlop !== undefined && document.getElementById('coeff-slop')) document.getElementById('coeff-slop').value = settings.coeffSlop;
+      if (settings.coeffFw !== undefined && document.getElementById('coeff-fw')) document.getElementById('coeff-fw').value = settings.coeffFw;
+      if (settings.coeffDetergent !== undefined && document.getElementById('coeff-detergent')) document.getElementById('coeff-detergent').value = settings.coeffDetergent;
+      if (settings.coeffFlow !== undefined && document.getElementById('coeff-flow')) document.getElementById('coeff-flow').value = settings.coeffFlow;
+      if (settings.coeffEff !== undefined && document.getElementById('coeff-eff')) document.getElementById('coeff-eff').value = settings.coeffEff;
+      if (settings.coeffTemp !== undefined && document.getElementById('coeff-temp')) document.getElementById('coeff-temp').value = settings.coeffTemp;
+      if (settings.coeffSeaTemp !== undefined && document.getElementById('coeff-sea-temp')) document.getElementById('coeff-sea-temp').value = settings.coeffSeaTemp;
+    } catch (e) {
+      console.error("Error loading settings state", e);
+    }
+  }
 }
 
 // ---- UTILITIES ----
@@ -2889,4 +3056,166 @@ function confirmAndRun() {
   disclaimerAccepted = true;
   closeModal();
   calculateFleetProtocols();
+}
+
+// ---- TIME SHEET ACTIONS ----
+function updateTimeSheet(tankId, stepIndex, field, value) {
+  if (!vesselTanks[tankId]) return;
+  if (!vesselTanks[tankId].timeSheet) {
+    vesselTanks[tankId].timeSheet = {};
+  }
+  if (!vesselTanks[tankId].timeSheet[stepIndex]) {
+    vesselTanks[tankId].timeSheet[stepIndex] = { commenced: '', completed: '', remarks: '' };
+  }
+  vesselTanks[tankId].timeSheet[stepIndex][field] = value;
+  saveVesselState();
+}
+
+function printTimeSheet(tankId) {
+  const tank = vesselTanks[tankId];
+  if (!tank) return;
+  
+  const vName = document.getElementById('vessel-name').value || 'ASTRID SPIRIT';
+  const vImo = document.getElementById('vessel-imo').value || '9876543';
+  const vOff = document.getElementById('officer-name').value || 'C/O Ahmet Yilmaz';
+  const dateStr = new Date().toLocaleDateString(lang === 'zh' ? 'zh-CN' : (lang === 'ru' ? 'ru-RU' : 'en-US'));
+
+  const key = `${tank.lastCargoId}_${tank.nextCargoId}`;
+  const protocolCode = matrixData[key] || 'N/A';
+  let proc = proceduresData[protocolCode];
+  if (!proc) {
+    proc = { instructions: 'No protocol available.', safety_note: '' };
+  }
+  
+  const rawInstructions = proc.instructions;
+  const translatedInst = (lang === 'tr' && proc.instructions_tr)
+    ? proc.instructions_tr
+    : translateProcedureText(rawInstructions, lang);
+  
+  const printContainer = document.createElement('div');
+  printContainer.id = 'print-timesheet-container';
+  
+  const stepLines = translatedInst.split(/\n/).filter(s => s.trim());
+  const stepsRowsHtml = stepLines.map((stepLine, i) => {
+    const cleanLine = stepLine.replace(/^(STEP|ADIM|PASO|ΒΗΜΑ|ШАГ|步骤)\s*\d+:\s*/i, '').trim();
+    const numMatch = stepLine.match(/^(STEP|ADIM|PASO|ΒΗΜΑ|ШАГ|步骤)\s*(\d+)/i);
+    const stepNum = numMatch ? numMatch[2] : String(i+1);
+    const stepPrefix = T[lang].step_prefix || 'STEP';
+    
+    const timeData = (tank.timeSheet && tank.timeSheet[i]) || { commenced: '', completed: '', remarks: '' };
+    
+    return `
+      <tr>
+        <td style="border: 1px solid #222; padding: 10px; font-weight: bold; width: 90px; text-align: center; font-family: monospace;">${stepPrefix} ${stepNum}</td>
+        <td style="border: 1px solid #222; padding: 10px; text-align: left;">${cleanLine}</td>
+        <td style="border: 1px solid #222; padding: 10px; text-align: center; font-family: monospace; width: 110px;">${timeData.commenced || '-'}</td>
+        <td style="border: 1px solid #222; padding: 10px; text-align: center; font-family: monospace; width: 110px;">${timeData.completed || '-'}</td>
+        <td style="border: 1px solid #222; padding: 10px; text-align: left; min-width: 150px;">${timeData.remarks || '-'}</td>
+      </tr>
+    `;
+  }).join('');
+
+  const titleText = lang === 'tr' ? 'TANK YIKAMA ZAMAN RAPORU (TIME SHEET)' : 'TANK CLEANING TIME SHEET & LOG';
+  const vesselLabel = lang === 'tr' ? 'GEMİ ADI:' : 'VESSEL NAME:';
+  const imoLabel = lang === 'tr' ? 'IMO NUMARASI:' : 'IMO NUMBER:';
+  const holdLabel = lang === 'tr' ? 'KARGO TANKI:' : 'CARGO HOLD:';
+  const transitionLabel = lang === 'tr' ? 'YÜK GEÇİŞİ:' : 'CARGO TRANSITION:';
+  const dateLabel = lang === 'tr' ? 'TARİH:' : 'DATE:';
+  
+  const stepCol = lang === 'tr' ? 'İŞLEM ADIMI' : 'STEP';
+  const descCol = lang === 'tr' ? 'YIKAMA TALİMATI / AÇIKLAMA' : 'PROCEDURE / DESCRIPTION';
+  const startCol = lang === 'tr' ? 'BAŞLANGIÇ' : 'COMMENCED';
+  const endCol = lang === 'tr' ? 'BİTİŞ' : 'COMPLETED';
+  const remarksCol = lang === 'tr' ? 'NOTLAR / AÇIKLAMALAR' : 'REMARKS';
+
+  const officerLabel = lang === 'tr' ? 'BAŞ ZABİT İMZASI' : 'CHIEF OFFICER SIGNATURE';
+  const inspectorLabel = lang === 'tr' ? 'SURVEYÖR İMZASI' : 'INSPECTOR / SURVEYOR SIGNATURE';
+
+  printContainer.innerHTML = `
+    <div style="font-family: Arial, sans-serif; color: #000; padding: 30px; background: #fff; max-width: 800px; margin: 0 auto; line-height: 1.4;">
+      <div style="text-align: center; border-bottom: 3px double #000; padding-bottom: 12px; margin-bottom: 20px;">
+        <h2 style="margin: 0; font-size: 1.4rem; letter-spacing: 1px; font-weight: 800;">${titleText}</h2>
+        <p style="margin: 4px 0 0 0; font-size: 0.8rem; font-weight: bold; color: #555; text-transform: uppercase;">ASTRID ATS v2.0 PRO — TIME LOGGER REPORT</p>
+      </div>
+      
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 0.85rem;">
+        <tr>
+          <td style="padding: 6px 0; font-weight: bold; width: 140px;">${vesselLabel}</td>
+          <td style="padding: 6px 0; border-bottom: 1px solid #ddd;">${vName.toUpperCase()}</td>
+          <td style="padding: 6px 0; font-weight: bold; width: 100px; padding-left: 20px;">${dateLabel}</td>
+          <td style="padding: 6px 0; border-bottom: 1px solid #ddd; width: 150px;">${dateStr}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; font-weight: bold;">${imoLabel}</td>
+          <td style="padding: 6px 0; border-bottom: 1px solid #ddd;">${vImo}</td>
+          <td style="padding: 6px 0; font-weight: bold; padding-left: 20px;">${holdLabel}</td>
+          <td style="padding: 6px 0; border-bottom: 1px solid #ddd; font-weight: bold;">TANK ${tankId}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; font-weight: bold;">${transitionLabel}</td>
+          <td colspan="3" style="padding: 6px 0; border-bottom: 1px solid #ddd;"><strong>${tank.lastCargoName}</strong> ➔ <strong>${tank.nextCargoName}</strong></td>
+        </tr>
+      </table>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-bottom: 40px;">
+        <thead>
+          <tr style="background: #f0f0f0;">
+            <th style="border: 1px solid #222; padding: 10px; text-align: center; font-weight: bold;">${stepCol}</th>
+            <th style="border: 1px solid #222; padding: 10px; text-align: left; font-weight: bold;">${descCol}</th>
+            <th style="border: 1px solid #222; padding: 10px; text-align: center; font-weight: bold;">${startCol}</th>
+            <th style="border: 1px solid #222; padding: 10px; text-align: center; font-weight: bold;">${endCol}</th>
+            <th style="border: 1px solid #222; padding: 10px; text-align: left; font-weight: bold;">${remarksCol}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${stepsRowsHtml}
+        </tbody>
+      </table>
+
+      <div style="display: flex; justify-content: space-between; margin-top: 60px; font-size: 0.85rem;">
+        <div style="width: 45%; text-align: center;">
+          <div style="height: 40px;"></div>
+          <div style="border-top: 1px solid #000; padding-top: 6px; font-weight: bold;">${officerLabel}</div>
+          <div style="font-size: 0.8rem; margin-top: 4px; color: #333;">${vOff}</div>
+        </div>
+        <div style="width: 45%; text-align: center;">
+          <div style="height: 40px;"></div>
+          <div style="border-top: 1px solid #000; padding-top: 6px; font-weight: bold;">${inspectorLabel}</div>
+          <div style="font-size: 0.8rem; margin-top: 4px; color: #777;">Surveyor / Port Inspector</div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(printContainer);
+  
+  const style = document.createElement('style');
+  style.id = 'print-timesheet-style';
+  style.innerHTML = `
+    @media print {
+      body * {
+        visibility: hidden !important;
+      }
+      #print-timesheet-container, #print-timesheet-container * {
+        visibility: visible !important;
+      }
+      #print-timesheet-container {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        background: #fff !important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+  
+  window.print();
+  
+  // Cleanup
+  setTimeout(() => {
+    const styleEl = document.getElementById('print-timesheet-style');
+    if (styleEl) styleEl.remove();
+    printContainer.remove();
+  }, 1000);
 }
