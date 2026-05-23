@@ -136,6 +136,8 @@ const T = {
     wwt_permanganate: '⏱️ Permanganate Time Test (Pass)',
     wwt_ph: '📈 pH Neutrality (6.5 - 7.5)',
     btn_save_config: 'SAVE CONFIGURATION',
+    btn_clear_config: 'CLEAR',
+    btn_clear_all_tanks: '🧹 CLEAR ALL TANKS',
     lbl_report_title: 'FLEET SIMULATION REPORT',
     lbl_cost_report: '📊 ECO-WASH COST REPORT',
     tbl_resource: 'RESOURCE',
@@ -224,6 +226,8 @@ const T = {
     wwt_permanganate: '⏱️ Permanganat Süre Testi (Geçti)',
     wwt_ph: '📈 pH Nötrlük Kontrolü (6.5 - 7.5)',
     btn_save_config: 'KONFİGÜRASYONU KAYDET',
+    btn_clear_config: 'TEMİZLE',
+    btn_clear_all_tanks: '🧹 TÜMÜNÜ TEMİZLE',
     lbl_report_title: 'FİLO SİMÜLASYON RAPORU',
     lbl_cost_report: '📊 EKO-YIKAMA MALİYET RAPORU',
     tbl_resource: 'KAYNAK',
@@ -312,6 +316,8 @@ const T = {
     wwt_permanganate: '⏱️ Tiempo de Permanganato (Aprobado)',
     wwt_ph: '📈 Neutralidad del pH (6.5 - 7.5)',
     btn_save_config: 'GUARDAR CONFIGURACIÓN',
+    btn_clear_config: 'LIMPIAR',
+    btn_clear_all_tanks: '🧹 LIMPIAR TODOS',
     lbl_report_title: 'INFORME DE SIMULACIÓN DE FLOTA',
     lbl_cost_report: '📊 INFORME DE COSTO DE ECO-LAVADO',
     tbl_resource: 'RECURSO',
@@ -400,6 +406,8 @@ const T = {
     wwt_permanganate: '⏱️ Χρόνος Υπερμαγγανικού (Επιτυχές)',
     wwt_ph: '📈 Ουδετερότητα pH (6.5 - 7.5)',
     btn_save_config: 'ΑΠΟΘΗΚΕΥΣΗ ΡΥΘΜΙΣΕΩΝ',
+    btn_clear_config: 'ΚΑΘΑΡΙΣΜΟΣ',
+    btn_clear_all_tanks: '🧹 ΚΑΘΑΡΙΣΜΟΣ ΟΛΩΝ',
     lbl_report_title: 'ΕΚΘΕΣΗ ΠΡΟΣΟΜΟΙΩΣΗΣ ΣΤΟΛΟΥ',
     lbl_cost_report: '📊 ΕΚΘΕΣΗ ΚΟΣΤΟΥΣ ECO-ΠΛΥΣΗΣ',
     tbl_resource: 'ΚΑΤΗΓΟΡΙΑ',
@@ -488,6 +496,8 @@ const T = {
     wwt_permanganate: '⏱️ Перманганатное Время (Пройдено)',
     wwt_ph: '📈 Проверка pH (6.5 - 7.5)',
     btn_save_config: 'СОХРАНИТЬ КОНФИГУРАЦИЮ',
+    btn_clear_config: 'ОЧИСТИТЬ',
+    btn_clear_all_tanks: '🧹 ОЧИСТИТЬ ВСЕ',
     lbl_report_title: 'ОТЧЕТ ПО СИМУЛЯЦИИ ФЛОТА',
     lbl_cost_report: '📊 СМЕТА РАСХОДОВ НА ЭКО-МОЙКУ',
     tbl_resource: 'РЕСУРС',
@@ -576,6 +586,8 @@ const T = {
     wwt_permanganate: '⏱️ 高锰酸钾时间测试 (合格)',
     wwt_ph: '📈 pH 中性度检查 (6.5 - 7.5)',
     btn_save_config: '保存配置信息',
+    btn_clear_config: '清除',
+    btn_clear_all_tanks: '🧹 清除所有舱',
     lbl_report_title: '船队模拟报告',
     lbl_cost_report: '📊 环保洗舱成本报告',
     tbl_resource: '资源类别',
@@ -1783,6 +1795,92 @@ function saveTankConfig() {
     cardEl.classList.add('just-saved');
     setTimeout(() => cardEl.classList.remove('just-saved'), 1500);
   }
+}
+
+function clearActiveTankConfig() {
+  if (!activeEditingTankId) return;
+  const tank = vesselTanks[activeEditingTankId];
+  if (!tank) return;
+  
+  tank.lastCargoId = null;
+  tank.lastCargoName = '';
+  tank.nextCargoId = null;
+  tank.nextCargoName = '';
+  tank.heated = false;
+  tank.wwt = { hydrocarbons: false, chlorides: false, permanganate: false, ph: false };
+  if (tank.timeSheet) {
+    tank.timeSheet = {};
+  }
+  
+  // Update inputs in UI
+  document.getElementById('editor-input-last').value = '';
+  document.getElementById('editor-input-next').value = '';
+  document.getElementById('editor-input-last').dataset.cargoId = '';
+  document.getElementById('editor-input-next').dataset.cargoId = '';
+  document.getElementById('editor-ind-last').textContent = '—';
+  document.getElementById('editor-ind-next').textContent = '—';
+  document.getElementById('editor-heated').checked = false;
+  
+  document.getElementById('wwt-hydrocarbons').checked = false;
+  document.getElementById('wwt-chlorides').checked = false;
+  document.getElementById('wwt-permanganate').checked = false;
+  document.getElementById('wwt-ph').checked = false;
+  
+  validateEditorInput('last');
+  validateEditorInput('next');
+  
+  checkFleetReactivity();
+  renderVesselGrid();
+  saveVesselState();
+  
+  const cardEl = document.getElementById(`card-${activeEditingTankId}`);
+  if (cardEl) {
+    cardEl.classList.add('just-saved');
+    setTimeout(() => cardEl.classList.remove('just-saved'), 1500);
+  }
+}
+
+function clearAllTanksConfig() {
+  const confirmMsg = lang === 'tr' 
+    ? 'Tüm tankların planlanan yük ve WWT verilerini sıfırlamak istediğinize emin misiniz?' 
+    : 'Are you sure you want to clear all planned cargo and WWT configurations for all tanks?';
+  
+  if (!confirm(confirmMsg)) return;
+  
+  Object.keys(vesselTanks).forEach(id => {
+    const tank = vesselTanks[id];
+    tank.lastCargoId = null;
+    tank.lastCargoName = '';
+    tank.nextCargoId = null;
+    tank.nextCargoName = '';
+    tank.heated = false;
+    tank.wwt = { hydrocarbons: false, chlorides: false, permanganate: false, ph: false };
+    if (tank.timeSheet) {
+      tank.timeSheet = {};
+    }
+  });
+  
+  if (activeEditingTankId) {
+    document.getElementById('editor-input-last').value = '';
+    document.getElementById('editor-input-next').value = '';
+    document.getElementById('editor-input-last').dataset.cargoId = '';
+    document.getElementById('editor-input-next').dataset.cargoId = '';
+    document.getElementById('editor-ind-last').textContent = '—';
+    document.getElementById('editor-ind-next').textContent = '—';
+    document.getElementById('editor-heated').checked = false;
+    
+    document.getElementById('wwt-hydrocarbons').checked = false;
+    document.getElementById('wwt-chlorides').checked = false;
+    document.getElementById('wwt-permanganate').checked = false;
+    document.getElementById('wwt-ph').checked = false;
+    
+    validateEditorInput('last');
+    validateEditorInput('next');
+  }
+  
+  checkFleetReactivity();
+  renderVesselGrid();
+  saveVesselState();
 }
 
 // ---- COF RULE-BASED CHEMICAL CLASSIFIER ----

@@ -2211,3 +2211,50 @@ body.light-mode .marpol-card .standard-pill {
   border-color: rgba(5, 150, 105, 0.15);
   color: #059669;
 }
+
+/* Sleek Clear Buttons */
+.clear-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(239, 68, 68, 0.08);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: var(--radius);
+  padding: 12px 24px;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clear-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.clear-btn:active {
+  transform: translateY(1px);
+}
+
+.clear-all-tanks-btn {
+  margin-top: 15px;
+  width: 100%;
+}
+
+/* Light mode overrides for clear buttons */
+body.light-mode .clear-btn {
+  background: rgba(220, 38, 38, 0.05);
+  color: #dc2626;
+  border-color: rgba(220, 38, 38, 0.2);
+}
+body.light-mode .clear-btn:hover {
+  background: rgba(220, 38, 38, 0.1);
+  border-color: rgba(220, 38, 38, 0.4);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.1);
+}
