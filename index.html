@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ASTRID ATS — Tank Cleaning Protocol System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <div class="bg-grid"></div>
+  <div class="bg-glow"></div>
+
+  <!-- DISCLAIMER MODAL -->
+  <div class="modal-overlay hidden" id="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-icon">⚠</div>
+      <div class="modal-title" id="modal-title">PROFESSIONAL DISCLAIMER</div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-actions">
+        <button class="modal-btn-cancel" onclick="closeModal()" id="modal-cancel-btn">CANCEL</button>
+        <button class="modal-btn-confirm" onclick="confirmAndRun()" id="modal-confirm-btn">I UNDERSTAND & ACCEPT</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <a class="nav-logo" href="javascript:location.reload()" title="Ana Sayfa">
+      <span class="logo-mark">◈</span>
+      <span class="logo-text">ASTRID<span class="logo-sub">ATS</span></span>
+    </a>
+    <div class="nav-right">
+      <div class="nav-controls">
+        <div class="lang-toggle">
+          <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
+          <span class="lang-sep">|</span>
+          <button class="lang-btn" id="btn-tr" onclick="setLang('tr')">TR</button>
+          <span class="lang-sep">|</span>
+          <button class="lang-btn" id="btn-es" onclick="setLang('es')">ES</button>
+          <span class="lang-sep">|</span>
+          <button class="lang-btn" id="btn-el" onclick="setLang('el')">EL</button>
+          <span class="lang-sep">|</span>
+          <button class="lang-btn" id="btn-ru" onclick="setLang('ru')">RU</button>
+          <span class="lang-sep">|</span>
+          <button class="lang-btn" id="btn-zh" onclick="setLang('zh')">ZH</button>
+        </div>
+        <div class="nav-divider"></div>
+        <button class="theme-toggle-btn" id="btn-theme-toggle" onclick="toggleTheme()" title="Toggle Night Mode">🌙</button>
+        <div class="nav-divider"></div>
+        <a href="pricing.html" class="nav-pill nav-pill-accent" id="pricing-nav-btn" data-translate="nav_subscribe">SUBSCRIBE</a>
+        <a href="login.html" class="nav-pill nav-pill-ghost" id="btn-login-nav" data-translate="nav_login">LOGIN</a>
+        <button class="nav-pill nav-pill-logout" id="btn-logout-nav" onclick="handleLogout()" style="display:none" data-translate="nav_logout">LOG OUT</button>
+      </div>
+    </div>
+
+  </nav>
+
+  <!-- DISCLAIMER BAND -->
+  <div class="disclaimer-band">
+    <span class="disc-icon">⚠</span>
+    <span id="disc-text" data-translate="disc_text">Reference tool only. All protocols must be verified by qualified Chief Officer or Surveyor. Astrid ATS bears no liability for cargo contamination or damage.</span>
+  </div>
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="hero-tag" id="hero-tag" data-translate="hero_tag">AUTOMATIC TANK CLEANING PROTOCOL SYSTEM</div>
+    <h1 class="hero-title">ASTRID<br><em>ATS</em></h1>
+    <p class="hero-sub" id="hero-sub" data-translate="hero_sub">Select vessel configuration and cargo to generate your cleaning protocol</p>
+  </header>
+
+  <main class="main-dashboard">
+    <div class="dashboard-container">
+      
+      <!-- LEFT PANEL: BIRD'S-EYE VIEW VESSEL PROFILE -->
+      <div class="left-panel">
+        <div class="vessel-hull-container">
+          <div class="vessel-hull">
+            <div class="hull-bow">
+              <span class="bow-arrow">▲ FORE (BOW)</span>
+            </div>
+            
+            <!-- Stowage Tank Grid inside Hull -->
+            <div class="vessel-grid" id="vessel-stowage-grid"></div>
+            
+            <div class="hull-aft">
+              <span class="aft-label">▼ AFT</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT PANEL: TABBED CONTEXT PANEL -->
+      <div class="right-panel">
+        <!-- Tabs Nav -->
+        <div class="dashboard-tabs">
+          <button class="tab-btn active" id="btn-tab-config" onclick="switchDashboardTab('tab-config')" data-translate="tab_config">⚙️ CONFIG</button>
+          <button class="tab-btn" id="btn-tab-editor" onclick="switchDashboardTab('tab-editor')" data-translate="tab_editor">📝 TANK EDITOR</button>
+          <button class="tab-btn" id="btn-tab-eco" onclick="switchDashboardTab('tab-eco')" data-translate="tab_eco">📈 ECO-WASH</button>
+          <button class="tab-btn" id="btn-tab-certs" onclick="switchDashboardTab('tab-certs')" data-translate="tab_certs">📜 CERTIFICATES</button>
+        </div>
+
+        <div class="tab-contents">
+          
+          <!-- TAB 1: VESSEL CONFIG & SETTINGS -->
+          <div class="tab-pane" id="tab-config">
+            <h3 class="pane-title" data-translate="lbl_vessel_config">VESSEL CONFIGURATION & PARAMETERS</h3>
+            
+            <!-- Engine Core Diagnostics Badge Card -->
+            <div class="engine-diagnostics-card" style="margin-top: 15px; margin-bottom: 20px;">
+              <div class="engine-header">
+                <span class="engine-pulse-dot"></span>
+                <span class="engine-title" id="engine-title" data-translate="lbl_engine_title">ASTRID DYNAMIC ENGINE v2.0 PRO</span>
+              </div>
+              <div class="engine-body" id="engine-desc" data-translate="lbl_engine_desc">
+                Active Database: 168,000+ Wash Combinations Mapped dynamically in &lt;5ms. Next-Gen Topological Wash-Path Solver optimizes time, water, and fuel consumption.
+              </div>
+            </div>
+            
+            <!-- Preset Selection -->
+            <div class="field-group">
+              <label class="field-label" data-translate="lbl_presets">Vessel Presets</label>
+              <select class="select-input" id="vessel-preset" onchange="applyVesselPreset()">
+                <option value="preset-18">18-Tank MR Chemical Carrier (P/S, 9 Holds)</option>
+                <option value="preset-26">26-Tank Chemical Carrier (P/C/S, 9 Holds)</option>
+                <option value="custom">Custom Hull Configuration...</option>
+              </select>
+            </div>
+
+            <!-- Custom Grid Rows Count -->
+            <div class="builder-custom-fields hidden" id="custom-builder-fields" style="margin-top: 15px;">
+              <div class="field-group" style="margin-bottom: 12px;">
+                <label class="field-label" data-translate="lbl_total_holds">Total Cargo Holds (Rows: 1-10)</label>
+                <input type="number" id="custom-rows" class="settings-input" value="6" min="1" max="10" onchange="onCustomRowsChange()">
+              </div>
+            </div>
+
+            <!-- Dynamic Row-by-Row Tank Layout Builder -->
+            <div class="row-config-section" style="margin-top: 20px;">
+              <h4 class="settings-section-title" data-translate="lbl_schematic_builder">FLEXIBLE TANK SCHEMATIC BUILDER</h4>
+              <p style="font-size: 0.75rem; color: var(--text3); margin-bottom: 12px; line-height: 1.4;" data-translate="lbl_schematic_desc">
+                Enable/disable Port, Center, or Starboard tanks for each hold row to match your exact Certificate of Fitness.
+              </p>
+              <div class="row-config-list" id="vessel-row-config-list"></div>
+            </div>
+
+            <!-- Vessel Metadata -->
+            <div class="row-config-section" style="margin-top: 25px;">
+              <h4 class="settings-section-title" data-translate="lbl_vessel_metadata">VESSEL METADATA</h4>
+              <div class="settings-subgrid">
+                <div class="field-group">
+                  <label class="field-label" data-translate="lbl_vessel_name">Vessel Name</label>
+                  <input type="text" id="vessel-name" class="settings-input" value="ASTRID SPIRIT">
+                </div>
+                <div class="field-group">
+                  <label class="field-label" data-translate="lbl_imo_number">IMO Number</label>
+                  <input type="text" id="vessel-imo" class="settings-input" value="9876543">
+                </div>
+              </div>
+              <div class="settings-subgrid" style="margin-top: 8px;">
+                <div class="field-group">
+                  <label class="field-label" data-translate="lbl_chief_officer">Chief Officer Name</label>
+                  <input type="text" id="officer-name" class="settings-input" value="C/O Ahmet Yilmaz">
+                </div>
+                <div class="field-group">
+                  <label class="field-label" data-translate="lbl_company_logo">Company Logo (Image URL)</label>
+                  <input type="text" id="company-logo" class="settings-input" placeholder="e.g. https://logo.png">
+                </div>
+              </div>
+            </div>
+
+            <!-- Eco coefficients constants -->
+            <div class="row-config-section" style="margin-top: 25px; margin-bottom: 25px;">
+              <h4 class="settings-section-title" data-translate="lbl_eco_constants">ECO-CALCULATOR CONSTANTS</h4>
+              <div class="settings-subgrid">
+                <div class="field-group">
+                  <label class="field-label" data-translate="lbl_fuel_cost">Fuel Cost ($/MT)</label>
+                  <input type="number" id="coeff-fuel" class="settings-input" value="650">
+                </div>
+                <div class="field-group">
+                  <label class="field-label" data-translate="lbl_slop_fee">Slop Fee ($/m³)</label>
+                  <input type="number" id="coeff-slop" class="settings-input" value="45">
+                </div>
+              </div>
+              <div class="settings-subgrid" style="margin-top: 8px;">
+                <div class="field-group">
+                  <label class="field-label" data-translate="lbl_fw_cost">FW Cost ($/m³)</label>
+                  <input type="number" id="coeff-fw" class="settings-input" value="5">
+                </div>
+                <div class="field-group">
+                  <label class="field-label" data-translate="lbl_detergent_cost">Detergent ($/L)</label>
+                  <input type="number" id="coeff-detergent" class="settings-input" value="12">
+                </div>
+              </div>
+              <div class="settings-subgrid" style="margin-top: 8px;">
+                <div class="field-group">
+                  <label class="field-label" data-translate="lbl_nozzle_flow">Nozzle Flow (m³/h)</label>
+                  <input type="number" id="coeff-flow" class="settings-input" value="15">
+                </div>
+                <div class="field-group">
+                  <label class="field-label" data-translate="lbl_ambient_temp">Ambient Temp (°C)</label>
+                  <input type="number" id="coeff-temp" class="settings-input" value="15">
+                </div>
+              </div>
+              <div class="settings-subgrid" style="margin-top: 8px;">
+                <div class="field-group" style="grid-column: span 2;">
+                  <label class="field-label" data-translate="lbl_boiler_efficiency">Boiler Efficiency (%)</label>
+                  <input type="number" id="coeff-eff" class="settings-input" value="82">
+                </div>
+              </div>
+            </div>
+
+            <!-- Run Simulation Button -->
+            <button class="run-btn" id="btn-run-fleet" onclick="calculateFleetProtocols()" style="margin-bottom: 20px;">
+              <span class="btn-label" data-translate="btn_simulate_run">SIMULATE & RUN PROTOCOLS</span>
+              <span class="btn-icon">▶</span>
+            </button>
+            <div class="error-msg hidden" id="error-msg"></div>
+          </div>
+
+          <!-- TAB 2: TANK EDITOR -->
+          <div class="tab-pane hidden" id="tab-editor">
+            <h3 class="pane-title" data-translate="lbl_tank_details">TANK DETAILS EDITOR</h3>
+            
+            <div id="editor-no-selection" class="editor-empty-state">
+              <div class="empty-icon">👈</div>
+              <p data-translate="lbl_editor_no_selection">Please click on any tank in the bird's-eye ship plan on the left to edit its cargo, coating, and WWT status.</p>
+            </div>
+
+            <div id="editor-active-form" class="hidden">
+              <div class="editor-selected-header">
+                <span><span data-translate="lbl_active_hold">ACTIVE HOLD:</span> <strong>TANK <span id="editor-tank-name">1P</span></strong></span>
+                <span class="badge-code" id="editor-active-cap">1200 m³</span>
+              </div>
+
+              <div class="settings-subgrid" style="margin-top: 15px;">
+                <div class="field-group">
+                  <label class="field-label" data-translate="lbl_coating_type">Tank Coating</label>
+                  <select class="select-input" id="editor-coating">
+                    <option value="epoxy">Epoxy</option>
+                    <option value="phenolic">Phenolic Epoxy</option>
+                    <option value="zinc">Zinc Silicate</option>
+                    <option value="stainless">Stainless Steel</option>
+                    <option value="uncoated">Uncoated Steel</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label class="field-label" data-translate="lbl_capacity">Capacity (m³)</label>
+                  <input type="number" id="editor-capacity" class="settings-input" value="1200" min="100">
+                </div>
+              </div>
+
+              <div class="tank-cargo-box">
+                <h5 class="cargo-box-title" data-translate="lbl_cargo_sequence">CARGO SEQUENCE</h5>
+                <div class="field-group">
+                  <label class="field-label" data-translate="lbl_last_cargo">LAST CARGO</label>
+                  <div class="input-wrap">
+                    <input type="text" id="editor-input-last" class="cargo-input" list="cargo-list" autocomplete="off" placeholder="Search cargo..." data-translate-placeholder="placeholder_search">
+                    <div class="input-indicator" id="editor-ind-last">—</div>
+                  </div>
+                </div>
+                <div class="field-group" style="margin-top: 12px;">
+                  <label class="field-label" data-translate="lbl_next_cargo">NEXT CARGO</label>
+                  <div class="input-wrap">
+                    <input type="text" id="editor-input-next" class="cargo-input" list="cargo-list" autocomplete="off" placeholder="Search cargo..." data-translate-placeholder="placeholder_search">
+                    <div class="input-indicator" id="editor-ind-next">—</div>
+                  </div>
+                </div>
+                <div class="field-group" style="margin-top: 15px; display: flex; flex-direction: row; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="editor-heated" style="width: 18px; height: 18px; cursor: pointer;">
+                  <label class="field-label" for="editor-heated" style="cursor: pointer; user-select: none;" data-translate="lbl_heated_cargo">🔥 HEATED CARGO (ACTIVE HEATING)</label>
+                </div>
+              </div>
+
+              <div class="tank-wwt-box">
+                <h5 class="cargo-box-title" data-translate="lbl_wwt_status">WALL WASH TEST (WWT) STATUS</h5>
+                <div class="wwt-checklist">
+                  <label class="wwt-chk-label">
+                    <input type="checkbox" id="wwt-hydrocarbons"> <span data-translate="wwt_hydrocarbons">🧪 Hydrocarbons (Pass / Water White)</span>
+                  </label>
+                  <label class="wwt-chk-label">
+                    <input type="checkbox" id="wwt-chlorides"> <span data-translate="wwt_chlorides">🧂 Chlorides (< 5 ppm)</span>
+                  </label>
+                  <label class="wwt-chk-label">
+                    <input type="checkbox" id="wwt-permanganate"> <span data-translate="wwt_permanganate">⏱️ Permanganate Time Test (Pass)</span>
+                  </label>
+                  <label class="wwt-chk-label">
+                    <input type="checkbox" id="wwt-ph"> <span data-translate="wwt_ph">📈 pH Neutrality (6.5 - 7.5)</span>
+                  </label>
+                </div>
+              </div>
+
+              <button class="run-btn" onclick="saveTankConfig()" style="margin-top: 20px; background: var(--accent); color: #000; margin-bottom: 25px;" data-translate="btn_save_config">
+                SAVE CONFIGURATION
+              </button>
+            </div>
+          </div>
+
+          <!-- TAB 3: ECO-WASH RESULTS -->
+          <div class="tab-pane hidden" id="tab-eco">
+            <h3 class="pane-title" data-translate="lbl_report_title">FLEET SIMULATION REPORT</h3>
+            
+            <div class="compat-warnings hidden" id="fleet-compat-warnings" style="margin-bottom: 20px;"></div>
+
+            <div class="financial-summary-panel" style="padding: 20px; margin-bottom: 25px;">
+              <h4 class="summary-title" style="font-size: 0.75rem; margin-bottom: 12px;" data-translate="lbl_cost_report">📊 ECO-WASH COST REPORT</h4>
+              <table class="cost-table">
+                <thead>
+                  <tr>
+                    <th data-translate="tbl_resource">RESOURCE</th>
+                    <th data-translate="tbl_qty">QTY</th>
+                    <th data-translate="tbl_cost">COST</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td data-translate="res_fw">Fresh Water</td>
+                    <td id="res-fw-qty">0.0 m³</td>
+                    <td id="res-fw-cost">$0.00</td>
+                  </tr>
+                  <tr>
+                    <td data-translate="res_fuel">Boiler Fuel</td>
+                    <td id="res-fuel-qty">0.0 MT</td>
+                    <td id="res-fuel-cost">$0.00</td>
+                  </tr>
+                  <tr>
+                    <td data-translate="res_slop">Slop Disposal</td>
+                    <td id="res-slop-qty">0.0 m³</td>
+                    <td id="res-slop-cost">$0.00</td>
+                  </tr>
+                  <tr>
+                    <td data-translate="res_detergent">Detergents</td>
+                    <td id="res-chem-qty">0.0 L</td>
+                    <td id="res-chem-cost">$0.00</td>
+                  </tr>
+                  <tr class="total-row">
+                    <td data-translate="res_total_est">TOTAL ESTIMATE</td>
+                    <td id="res-total-duration">0.0 H</td>
+                    <td id="res-total-cost">$0.00</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="detergent-order-panel" style="margin-bottom: 25px;">
+              <h4 data-translate="lbl_additive_sheet">📦 ADDITIVE ORDER SHEET</h4>
+              <div class="order-sheet-value">
+                <strong id="order-qty-liters">0 L</strong>
+                <span id="order-qty-drums">(0 Drums)</span>
+              </div>
+              <div class="order-spec" id="order-type-spec">Neutral Emulsifier</div>
+            </div>
+
+            <div class="steps-header" data-translate="lbl_detailed_protocols">DETAILED PROTOCOLS BY TANK</div>
+            <div id="tank-protocols-container" class="tank-protocols-container"></div>
+          </div>
+
+          <!-- TAB 4: WWT CERTIFICATES -->
+          <div class="tab-pane hidden" id="tab-certs">
+            <h3 class="pane-title" data-translate="lbl_vetting_certs">VESSEL VETTING CERTIFICATES</h3>
+            <p style="font-size: 0.75rem; color: var(--text3); margin-bottom: 20px; line-height: 1.4;" data-translate="lbl_certs_desc">
+              Certificates are automatically generated for cargo holds that have passed all 4 Wall Wash Tests (WWT). Click "Print" to export individual certificates to A4 paper.
+            </p>
+            <div id="wwt-certificates-container" class="wwt-certificates-container"></div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- datalist index (still used for autocomplete search) -->
+  <datalist id="cargo-list"></datalist>
+
+  <footer class="footer">
+    <div class="footer-content" style="display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; width: 100%;">
+      <div class="footer-primary" style="display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;">
+        <span>ASTRID ATS © 2026 Q3</span>
+        <span class="footer-sep">·</span>
+        <span id="footer-sub" data-translate="lbl_footer_sub">Tank Cleaning Protocol System</span>
+        <span class="footer-sep">·</span>
+        <span id="footer-ver" style="color: var(--accent); font-weight: 700; text-shadow: 0 0 6px var(--accent-glow);">V2.0 PRO</span>
+        <span class="footer-sep">·</span>
+        <a href="terms.html" class="footer-link" id="footer-terms">Terms of Use</a>
+      </div>
+      <div id="footer-tagline" data-translate="lbl_footer_tagline" style="font-size: 0.62rem; color: var(--text3); max-width: 900px; line-height: 1.5; font-family: var(--mono); letter-spacing: 0.5px;">
+        POWERED BY A NEXT-GEN TOPOLOGICAL SOLVER DYNAMICALLY MATCHING OVER 168,000+ Wash COMBINATIONS IN MILLISECONDS, OPTIMIZING VESSEL TURNAROUNDS AND CARGO VETTING GLOBALLY.
+      </div>
+    </div>
+  </footer>
+
+  <script src="data/cargo-data.js"></script>
+  <script src="ats.js"></script>
+</body>
+</html>

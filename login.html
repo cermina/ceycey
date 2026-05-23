@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — ASTRID ATS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    .auth-main {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+      position: relative; z-index: 1;
+    }
+    .auth-box {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 16px;
+      padding: 48px 40px;
+      width: 100%; max-width: 420px;
+    }
+    .auth-logo {
+      text-align: center; margin-bottom: 32px;
+    }
+    .auth-logo .logo-mark { font-size: 2rem; color: var(--accent); filter: drop-shadow(0 0 10px var(--accent)); }
+    .auth-logo .logo-text { font-family: var(--mono); font-size: 1.2rem; font-weight: 700; letter-spacing: 2px; display: block; margin-top: 8px; }
+    .auth-logo .logo-sub { color: var(--accent); }
+    .auth-tabs {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 4px; margin-bottom: 28px;
+      background: var(--bg2); border-radius: 8px; padding: 4px;
+    }
+    .auth-tab {
+      font-family: var(--mono); font-size: 0.75rem;
+      letter-spacing: 1px; padding: 10px;
+      border: none; border-radius: 6px;
+      cursor: pointer; transition: all 0.2s;
+      background: transparent; color: var(--text3);
+    }
+    .auth-tab.active { background: var(--accent); color: var(--bg); font-weight: 700; }
+    .auth-field { margin-bottom: 16px; }
+    .auth-label {
+      font-family: var(--mono); font-size: 0.65rem;
+      letter-spacing: 2px; color: var(--text3);
+      display: block; margin-bottom: 8px;
+    }
+    .auth-input {
+      width: 100%;
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      color: var(--text);
+      font-family: var(--mono); font-size: 0.85rem;
+      outline: none; transition: all 0.2s;
+    }
+    .auth-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    .auth-btn {
+      width: 100%; padding: 16px;
+      background: var(--accent); color: var(--bg);
+      border: none; border-radius: var(--radius);
+      font-family: var(--mono); font-size: 0.85rem;
+      font-weight: 700; letter-spacing: 2px;
+      cursor: pointer; transition: all 0.2s;
+      margin-top: 8px;
+    }
+    .auth-btn:hover {
+      background: #33ddff;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+    .auth-msg {
+      margin-top: 16px; padding: 12px 16px;
+      border-radius: var(--radius);
+      font-family: var(--mono); font-size: 0.78rem;
+      text-align: center; display: none;
+    }
+    .auth-msg.error { background: rgba(255,107,53,0.1); border: 1px solid rgba(255,107,53,0.3); color: var(--warn); }
+    .auth-msg.success { background: var(--green-dim); border: 1px solid rgba(0,255,136,0.2); color: #44cc88; }
+    .auth-divider {
+      text-align: center; margin: 20px 0;
+      font-family: var(--mono); font-size: 0.7rem; color: var(--text3);
+    }
+    .back-to-site {
+      display: block; text-align: center; margin-top: 20px;
+      font-family: var(--mono); font-size: 0.7rem;
+      color: var(--text3); text-decoration: none;
+      transition: color 0.2s;
+    }
+    .back-to-site:hover { color: var(--accent); }
+    .pricing-link {
+      display: block; text-align: center; margin-top: 12px;
+      font-family: var(--mono); font-size: 0.7rem;
+      color: var(--accent); text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="bg-glow"></div>
+
+  <!-- Loading overlay while checking session -->
+  <div id="loading-overlay" style="position:fixed;inset:0;background:#050810;display:flex;align-items:center;justify-content:center;z-index:9999;">
+    <div style="font-family:monospace;color:#00d4ff;letter-spacing:3px;font-size:0.8rem;">CHECKING SESSION...</div>
+  </div>
+
+  <main class="auth-main" id="auth-main" style="display:none;">
+    <div class="auth-box">
+      <div class="auth-logo">
+        <span class="logo-mark">◈</span>
+        <span class="logo-text">ASTRID<span class="logo-sub">ATS</span></span>
+      </div>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">GİRİŞ YAP</button>
+        <button class="auth-tab" id="tab-register" onclick="switchTab('register')">KAYIT OL</button>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <div id="form-login">
+        <div class="auth-field">
+          <label class="auth-label" id="lbl-email">E-POSTA</label>
+          <input type="email" id="login-email" class="auth-input" placeholder="email@example.com">
+        </div>
+        <div class="auth-field">
+          <label class="auth-label" id="lbl-password">ŞİFRE</label>
+          <input type="password" id="login-password" class="auth-input" placeholder="••••••••">
+        </div>
+        <button class="auth-btn" id="btn-login" onclick="handleLogin()">GİRİŞ YAP</button>
+        <div class="auth-msg" id="login-msg"></div>
+      </div>
+
+      <!-- REGISTER FORM -->
+      <div id="form-register" style="display:none">
+        <div class="auth-field">
+          <label class="auth-label" id="lbl-email">E-POSTA</label>
+          <input type="email" id="reg-email" class="auth-input" placeholder="email@example.com">
+        </div>
+        <div class="auth-field">
+          <label class="auth-label" id="lbl-password3">ŞİFRE (min. 8)</label>
+          <input type="password" id="reg-password" class="auth-input" placeholder="••••••••">
+        </div>
+        <div class="auth-field">
+          <label class="auth-label" id="lbl-password2">ŞİFRE TEKRAR</label>
+          <input type="password" id="reg-password2" class="auth-input" placeholder="••••••••">
+        </div>
+        <button class="auth-btn" id="btn-register" onclick="handleRegister()">KAYIT OL</button>
+        <div class="auth-msg" id="reg-msg"></div>
+        <div class="auth-divider">Kayıt olduktan sonra e-postanızı doğrulayın</div>
+      </div>
+
+      <a href="index.html" class="back-to-site" id="back-link">← Siteye geri dön</a>
+      <a href="pricing.html" class="pricing-link" id="pricing-link">Fiyatlandırma</a>
+    </div>
+  </main>
+
+  <script>
+    const SUPABASE_URL = 'https://zpbcddciudckzauzclbe.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_YLjHM5sczbAt_DL6_aBxwA_kIxuPa4V';
+
+    const loginT = {
+      en: { tab_login: 'LOGIN', tab_register: 'REGISTER', email: 'EMAIL', password: 'PASSWORD', password2: 'CONFIRM PASSWORD', btn_login: 'LOGIN', btn_register: 'REGISTER', back: '← Back to site', pricing: 'Pricing', err_fields: 'Please fill all fields.', err_short: 'Min. 8 characters required.', err_match: 'Passwords do not match.', err_verify: '✅ Registration successful! Please verify your email.' },
+      tr: { tab_login: 'GİRİŞ YAP', tab_register: 'KAYIT OL', email: 'E-POSTA', password: 'ŞİFRE', password2: 'ŞİFRE TEKRAR', btn_login: 'GİRİŞ YAP', btn_register: 'KAYIT OL', back: '← Siteye geri dön', pricing: 'Fiyatlandırma', err_fields: 'Tüm alanları doldurun.', err_short: 'Min. 8 karakter gerekli.', err_match: 'Şifreler eşleşmiyor.', err_verify: '✅ Kayıt başarılı! E-postanızı doğrulayın.' },
+      es: { tab_login: 'INICIAR SESIÓN', tab_register: 'REGISTRARSE', email: 'CORREO', password: 'CONTRASEÑA', password2: 'CONFIRMAR', btn_login: 'INICIAR SESIÓN', btn_register: 'REGISTRARSE', back: '← Volver', pricing: 'Precios', err_fields: 'Complete todos los campos.', err_short: 'Mín. 8 caracteres.', err_match: 'Las contraseñas no coinciden.', err_verify: '✅ ¡Registro exitoso! Verifique su correo.' },
+      el: { tab_login: 'ΣΥΝΔΕΣΗ', tab_register: 'ΕΓΓΡΑΦΗ', email: 'EMAIL', password: 'ΚΩΔΙΚΟΣ', password2: 'ΕΠΙΒΕΒΑΙΩΣΗ', btn_login: 'ΣΥΝΔΕΣΗ', btn_register: 'ΕΓΓΡΑΦΗ', back: '← Επιστροφή', pricing: 'Τιμές', err_fields: 'Συμπληρώστε όλα τα πεδία.', err_short: 'Ελάχ. 8 χαρακτήρες.', err_match: 'Οι κωδικοί δεν ταιριάζουν.', err_verify: '✅ Επιτυχής εγγραφή!' },
+      ru: { tab_login: 'ВОЙТИ', tab_register: 'РЕГИСТРАЦИЯ', email: 'EMAIL', password: 'ПАРОЛЬ', password2: 'ПОДТВЕРДИТЕ', btn_login: 'ВОЙТИ', btn_register: 'ЗАРЕГИСТРИРОВАТЬСЯ', back: '← Назад', pricing: 'Цены', err_fields: 'Заполните все поля.', err_short: 'Мин. 8 символов.', err_match: 'Пароли не совпадают.', err_verify: '✅ Регистрация успешна!' },
+      zh: { tab_login: '登录', tab_register: '注册', email: '电子邮件', password: '密码', password2: '确认密码', btn_login: '登录', btn_register: '注册', back: '← 返回', pricing: '定价', err_fields: '请填写所有字段。', err_short: '至少需要8个字符。', err_match: '密码不匹配。', err_verify: '✅ 注册成功！' }
+    };
+
+    const lang = localStorage.getItem('ats_lang') || 'en';
+
+    function applyLoginLang() {
+      const t = loginT[lang] || loginT.en;
+      const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+      set('tab-login', t.tab_login);
+      set('tab-register', t.tab_register);
+      set('lbl-email', t.email);
+      set('lbl-password', t.password);
+      set('lbl-password2', t.password2);
+      set('lbl-password3', t.password);
+      set('lbl-email2', t.email);
+      set('btn-login', t.btn_login);
+      set('btn-register', t.btn_register);
+      set('back-link', t.back);
+      set('pricing-link', t.pricing);
+    }
+
+    const { createClient } = supabase;
+    const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function checkSession() {
+      try {
+        // Aktif Supabase oturumu varsa kullanıcı zaten giriş yapmış — ana sayfaya yönlendir
+        const { data } = await sb.auth.getSession();
+        if (data?.session) {
+          window.location.href = 'index.html';
+          return;
+        }
+      } catch(e) {}
+
+      // Oturum yok — login formunu göster
+      document.getElementById('loading-overlay').style.display = 'none';
+      document.getElementById('auth-main').style.display = 'flex';
+      applyLoginLang();
+    }
+
+    checkSession();
+    if (localStorage.getItem('ats_theme') === 'night') {
+      document.body.classList.add('night-mode');
+    }
+
+    function switchTab(tab) {
+      document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+      document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+      document.getElementById('form-login').style.display = tab === 'login' ? 'block' : 'none';
+      document.getElementById('form-register').style.display = tab === 'register' ? 'block' : 'none';
+    }
+
+    function showMsg(id, msg, type) {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.className = 'auth-msg ' + type;
+      el.style.display = 'block';
+    }
+
+    async function handleLogin() {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      const t = loginT[lang] || loginT.en;
+      if (!email || !password) { showMsg('login-msg', t.err_fields, 'error'); return; }
+      const btn = document.getElementById('btn-login');
+      btn.textContent = '...';
+      btn.disabled = true;
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      btn.disabled = false;
+      btn.textContent = t.btn_login;
+      if (error) { showMsg('login-msg', error.message, 'error'); return; }
+      window.location.href = 'index.html';
+    }
+
+    async function handleRegister() {
+      const email = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-password').value;
+      const password2 = document.getElementById('reg-password2').value;
+      const t = loginT[lang] || loginT.en;
+      if (!email || !password) { showMsg('reg-msg', t.err_fields, 'error'); return; }
+      if (password.length < 8) { showMsg('reg-msg', t.err_short, 'error'); return; }
+      if (password !== password2) { showMsg('reg-msg', t.err_match, 'error'); return; }
+      const btn = document.getElementById('btn-register');
+      btn.textContent = '...';
+      btn.disabled = true;
+      const { error } = await sb.auth.signUp({ email, password });
+      btn.disabled = false;
+      btn.textContent = t.btn_register;
+      if (error) { showMsg('reg-msg', error.message, 'error'); return; }
+      showMsg('reg-msg', t.err_verify, 'success');
+    }
+  </script>
+</body>
+</html>

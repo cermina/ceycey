@@ -1,0 +1,4 @@
+/data/*
+  X-Robots-Tag: noindex
+  Cache-Control: no-store
+  Content-Disposition: attachment

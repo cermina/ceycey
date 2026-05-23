@@ -1,0 +1,21 @@
+# Ignore archives
+*.zip
+*.rar
+deploy.zip
+data.zip
+
+# Ignore temporary/development files and scripts
+read_docx.py
+docx_content.txt
+test_ats.js
+
+# Ignore specific local directories
+ASTRID ATS SON VERSİYON DEPLOY DOSYASI/
+.gemini/
+.idea/
+.vscode/
+node_modules/
+dist/
+build/
+.DS_Store
+Thumbs.db

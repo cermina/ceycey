@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pricing — ASTRID ATS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .pricing-main { max-width: 900px; margin: 0 auto; padding: 60px clamp(16px,4vw,40px) 80px; position: relative; z-index: 1; text-align: center; }
+    .pricing-tag { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 4px; color: var(--accent); margin-bottom: 12px; }
+    .pricing-h1 { font-size: clamp(2rem,5vw,3.5rem); font-weight: 800; margin-bottom: 16px; color: var(--text); }
+    .pricing-sub { font-size: 1rem; color: var(--text2); margin-bottom: 60px; }
+    .plans-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 48px; }
+    .plan-card { background: var(--surface); border: 1px solid var(--border2); border-radius: 16px; padding: 36px 28px; text-align: left; position: relative; transition: all 0.2s; }
+    .plan-card:hover { border-color: var(--accent); box-shadow: 0 0 30px var(--accent-glow); transform: translateY(-4px); }
+    .plan-card.featured { border-color: var(--accent); background: rgba(0,212,255,0.04); }
+    .plan-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: var(--bg); font-family: var(--mono); font-size: 0.6rem; letter-spacing: 2px; padding: 4px 12px; border-radius: 20px; white-space: nowrap; }
+    .plan-name { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 3px; color: var(--text3); margin-bottom: 16px; }
+    .plan-price { font-size: 2.5rem; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+    .plan-price span { font-size: 1rem; color: var(--text3); font-weight: 400; }
+    .plan-desc { font-size: 0.85rem; color: var(--text2); margin-bottom: 24px; line-height: 1.6; }
+    .plan-features { list-style: none; padding: 0; margin-bottom: 28px; }
+    .plan-features li { font-size: 0.85rem; color: var(--text2); padding: 6px 0; border-bottom: 1px solid var(--border); display: flex; gap: 8px; }
+    .plan-features li::before { content: "✓"; color: var(--green); flex-shrink: 0; }
+    .plan-btn { display: block; width: 100%; padding: 14px; background: var(--accent); color: var(--bg); border: none; border-radius: var(--radius); font-family: var(--mono); font-size: 0.8rem; letter-spacing: 2px; font-weight: 700; cursor: pointer; text-align: center; text-decoration: none; transition: all 0.2s; }
+    .plan-btn:hover { background: #33ddff; box-shadow: 0 0 20px var(--accent-glow); }
+    .plan-btn.secondary { background: transparent; border: 1px solid var(--border2); color: var(--text2); }
+    .plan-btn.secondary:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+    .guarantee { display: inline-flex; align-items: center; gap: 10px; background: var(--green-dim); border: 1px solid rgba(0,255,136,0.2); border-radius: 40px; padding: 10px 20px; font-size: 0.85rem; color: #44cc88; margin-bottom: 40px; }
+    .back-link { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 0.75rem; color: var(--accent); text-decoration: none; margin-bottom: 40px; letter-spacing: 1px; }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="bg-glow"></div>
+  <nav class="nav">
+    <div class="nav-logo">
+      <span class="logo-mark">◈</span>
+      <span class="logo-text">ASTRID<span class="logo-sub">ATS</span></span>
+    </div>
+  </nav>
+
+  <main class="pricing-main">
+    <a href="index.html" class="back-link">← Back to Protocol Search</a>
+    <div class="pricing-tag">CORPORATE LICENSING</div>
+    <h1 class="pricing-h1">Vessel & Fleet Licensing</h1>
+    <p class="pricing-sub">Select a licensing model to deploy ASTRID ATS across your deck departments globally</p>
+
+    <div class="guarantee">🛡️ Industrial grade maritime Stowage plan vetting & ISGOTT compliant protocol generation</div>
+
+    <div class="plans-grid">
+
+      <div class="plan-card">
+        <div class="plan-name">FREE DEMO</div>
+        <div class="plan-price">$0</div>
+        <div class="plan-desc">Evaluate the system capabilities with limited rows</div>
+        <ul class="plan-features">
+          <li>1 active vessel row</li>
+          <li>First 2 steps of washing procedure</li>
+          <li>6-language translation system</li>
+          <li>Adjacency warning alarms</li>
+        </ul>
+        <a href="index.html" class="plan-btn secondary">Start Demo</a>
+      </div>
+
+      <div class="plan-card featured">
+        <div class="plan-badge">POPULAR</div>
+        <div class="plan-name">VESSEL LICENSE</div>
+        <div class="plan-price">Annual <span>/ Flat Rate</span></div>
+        <div class="plan-desc">For single chemical/product tankers</div>
+        <ul class="plan-features">
+          <li>Unlimited stowage simulations</li>
+          <li>168,000+ cargo combinations</li>
+          <li>Adjacency bulkhead reactivity engine</li>
+          <li>A4 Wall Wash Test Certificates</li>
+          <li>Full 209 wash procedures</li>
+          <li>Standard email support</li>
+        </ul>
+        <a href="mailto:sales@astridats.com?subject=Vessel License Request - Astrid ATS&body=Hello,%0D%0A%0D%0AI would like to request an annual vessel license. Please provide details.%0D%0A%0D%0ABest regards," class="plan-btn">Request Quote</a>
+      </div>
+
+      <div class="plan-card">
+        <div class="plan-name">ENTERPRISE FLEET</div>
+        <div class="plan-price">Custom <span>/ Fleet Tier</span></div>
+        <div class="plan-desc">For ship managers and fleet operators</div>
+        <ul class="plan-features">
+          <li>Unlimited vessels and users</li>
+          <li>Custom company branding on reports</li>
+          <li>Fleet-wide saved tank layouts</li>
+          <li>Unified user administration</li>
+          <li>Dedicated account manager</li>
+          <li>Priority 24/7 SLA support</li>
+        </ul>
+        <a href="mailto:sales@astridats.com?subject=Enterprise Fleet License Inquiry - Astrid ATS&body=Hello,%0D%0A%0D%0AI would like to inquire about a fleet license for our shipping fleet. Please contact us to discuss options.%0D%0A%0D%0ABest regards," class="plan-btn secondary">Contact Sales</a>
+      </div>
+
+    </div>
+
+    <p style="font-size: 0.8rem; color: var(--text3);">Astrid ATS © 2026 Q3 · Flat annual billing per vessel · Enterprise SLA integrations available</p>
+  </main>
+  <script>
+    if (localStorage.getItem('ats_theme') === 'night') {
+      document.body.classList.add('night-mode');
+    }
+  </script>
+</body>
+</html>
