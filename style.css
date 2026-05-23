@@ -1090,14 +1090,14 @@ body {
 }
 .vessel-hull {
   position: relative;
-  width: 290px;
+  width: 320px;
   background: rgba(5, 8, 16, 0.7);
   border: 2px solid var(--border2);
   box-shadow: 0 0 30px rgba(0, 212, 255, 0.05);
-  padding: 50px 12px 40px;
-  /* Bow shape (pointed top) and Aft shape (slightly rounded bottom) */
-  border-top-left-radius: 145px 300px;
-  border-top-right-radius: 145px 300px;
+  padding: 75px 16px 40px;
+  /* Bow shape (blunt top) and Aft shape (slightly rounded bottom) */
+  border-top-left-radius: 110px 450px;
+  border-top-right-radius: 110px 450px;
   border-bottom-left-radius: 40px 60px;
   border-bottom-right-radius: 40px 60px;
   display: flex;
@@ -1155,14 +1155,14 @@ body {
   background: var(--bg2);
   border: 1px solid var(--border2);
   border-radius: var(--radius);
-  padding: 6px 8px;
+  padding: 4px 6px;
   cursor: pointer;
   transition: all 0.2s;
   position: relative;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 64px;
+  min-height: 52px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 .tank-card:hover {

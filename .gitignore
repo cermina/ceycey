@@ -19,3 +19,9 @@ dist/
 build/
 .DS_Store
 Thumbs.db
+
+# Ignore raw data files and encryption tool
+data/procedures.json
+data/matrix_lookup.json
+encrypt_data.js
+

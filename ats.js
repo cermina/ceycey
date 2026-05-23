@@ -17,6 +17,7 @@ let proceduresData = {};
 let dataLoaded = false;
 let sbClient = null;
 let currentUser = null;
+let isDemoUser = false;
 
 // Vessel Simulator State
 let vesselTanks = {}; // tankId -> tank object
@@ -54,6 +55,22 @@ const coatingRules = {
     }
   },
   line: {
+    zinc: {
+      danger_keywords: ['CHM-29','CHM-30','CHM-31'],
+      caution_keywords: ['CHM-20','CHM-21'],
+      danger_msg_tr: '🚫 KRİTİK HAT UYUMSUZLUĞU: Asit içeren protokoller Çinko Silikat hatlarda korozyona yol açar.',
+      danger_msg_en: '🚫 CRITICAL LINE CONFLICT: Acid protocols cause severe corrosion in Zinc Silicate lines.',
+      caution_msg_tr: '⚠ HAT UYARISI: Güçlü alkali protokolü. Çinko Silikat hatlar için sınırlı temas önerilir.',
+      caution_msg_en: '⚠ LINE CAUTION: Strong alkali protocol. Limited contact recommended for Zinc Silicate lines.'
+    },
+    epoxy: {
+      caution_keywords: ['SLV'],
+      caution_msg_tr: '⚠ DİKKAT HAT: Solvent protokolü. Epoksi hat kaplamasının solvent direnç listesini kontrol edin.',
+      caution_msg_en: '⚠ CAUTION LINE: Solvent protocol. Verify epoxy pipe compatibility with manufacturer guide.'
+    },
+    stainless: {
+      // Stainless steel is fully compatible with all protocols
+    },
     rubber: {
       caution_keywords: ['SLV'],
       caution_msg_tr: '⚠ HAT: Kauçuk astarlı hatlar solventle uyumsuz olabilir.',
@@ -102,8 +119,8 @@ const T = {
     btn_simulate_run: 'SIMULATE & RUN PROTOCOLS',
     lbl_tank_details: 'TANK DETAILS EDITOR',
     lbl_editor_no_selection: 'Please click on any tank in the bird\'s-eye ship plan on the left to edit its cargo, coating, and WWT status.',
-    lbl_active_hold: 'ACTIVE HOLD:',
     lbl_coating_type: 'Tank Coating',
+    lbl_line_coating: 'Line/Pipe Coating',
     lbl_capacity: 'Capacity (m³)',
     lbl_cargo_sequence: 'CARGO SEQUENCE',
     lbl_last_cargo: 'LAST CARGO',
@@ -178,8 +195,8 @@ const T = {
     btn_simulate_run: 'SİMÜLE ET VE PROTOKOLLERİ ÇALIŞTIR',
     lbl_tank_details: 'TANK DETAY EDİTÖRÜ',
     lbl_editor_no_selection: 'Kargo, kaplama ve WWT durumunu düzenlemek için lütfen soldaki kuş bakışı gemi planındaki herhangi bir tanka tıklayın.',
-    lbl_active_hold: 'AKTİF TANK:',
     lbl_coating_type: 'Tank Kaplaması',
+    lbl_line_coating: 'Hat (Boru) Kaplaması',
     lbl_capacity: 'Kapasite (m³)',
     lbl_cargo_sequence: 'KARGO SIRALAMASI',
     lbl_last_cargo: 'SON YÜK',
@@ -254,8 +271,8 @@ const T = {
     btn_simulate_run: 'SIMULAR Y EJECUTAR PROTOCOLOS',
     lbl_tank_details: 'EDITOR DE DETALLES DEL TANQUE',
     lbl_editor_no_selection: 'Haga clic en cualquier tanque en el plano del barco a la izquierda para editar su carga, revestimiento y estado de WWT.',
-    lbl_active_hold: 'TANQUE ACTIVO:',
     lbl_coating_type: 'Revestimiento del Tanque',
+    lbl_line_coating: 'Revestimiento de Tuberías',
     lbl_capacity: 'Capacidad (m³)',
     lbl_cargo_sequence: 'SECUENCIA DE CARGA',
     lbl_last_cargo: 'ÚLTIMA CARGA',
@@ -330,8 +347,8 @@ const T = {
     btn_simulate_run: 'ΠΡΟΣΟΜΟΙΩΣΗ & ΕΚΤΕΛΕΣΗ ΠΡΩΤΟΚΟΛΛΩΝ',
     lbl_tank_details: 'ΕΠΕΞΕΡΓΑΣΤΗΣ ΔΕΞΑΜΕΝΗΣ',
     lbl_editor_no_selection: 'Κάντε κλικ σε οποιαδήποτε δεξαμενή στο σχέδιο του πλοίου στα αριστερά για να επεξεργαστείτε το φορτίο, την επίστρωση και την κατάσταση WWT.',
-    lbl_active_hold: 'ΕΝΕΡΓΗ ΔΕΞΑΜΕΝΗ:',
     lbl_coating_type: 'Επίστρωση Δεξαμενής',
+    lbl_line_coating: 'Επίστρωση Σωληνώσεων',
     lbl_capacity: 'Χωρητικότητα (m³)',
     lbl_cargo_sequence: 'ΑΛΛΗΛΟΥΧΙΑ ΦΟΡΤΙΩΝ',
     lbl_last_cargo: 'ΤΕΛΕΥΤΑΙΟ ΦΟΡΤΙΟ',
@@ -408,7 +425,8 @@ const T = {
     lbl_editor_no_selection: 'Пожалуйста, выберите любой танк на схеме судна слева, чтобы отредактировать его груз, покрытие и статус теста WWT.',
     lbl_active_hold: 'АКТИВНЫЙ ТАНК:',
     lbl_coating_type: 'Покрытие Танка',
-    lbl_capacity: 'Объем (m³)',
+    lbl_line_coating: 'Покрытие Трубопровода',
+    lbl_capacity: 'Объем (м³)',
     lbl_cargo_sequence: 'ПОСЛЕДОВАТЕЛЬНОСТЬ ГРУЗОВ',
     lbl_last_cargo: 'ПОСЛЕДНИЙ ГРУЗ',
     lbl_next_cargo: 'СЛЕДУЮЩИЙ ГРУЗ',
@@ -483,8 +501,9 @@ const T = {
     lbl_tank_details: '舱室详情编辑器',
     lbl_editor_no_selection: '请点击左侧俯视船舶图纸中的任何储罐，以编辑其货物、涂层和壁洗测试 (WWT) 状态。',
     lbl_active_hold: '活动储罐:',
-    lbl_coating_type: '储罐涂层',
-    lbl_capacity: '容积 (m³)',
+    lbl_coating_type: '舱壁涂层',
+    lbl_line_coating: '管路涂层',
+    lbl_capacity: '容量 (m³)',
     lbl_cargo_sequence: '装载货物序列',
     lbl_last_cargo: '前度货物',
     lbl_next_cargo: '拟载货物',
@@ -527,6 +546,49 @@ const T = {
   }
 };
 
+// --- DECRYPTION KEY RETRIEVAL ---
+async function fetchDecryptionKey() {
+  if (!sbClient || !currentUser) return null;
+  try {
+    const { data, error } = await sbClient
+      .from('app_config')
+      .select('value')
+      .eq('key', 'decryption_key')
+      .maybeSingle();
+    if (error) {
+      console.error("Error fetching decryption key:", error);
+      return null;
+    }
+    return data ? data.value : null;
+  } catch (e) {
+    console.error("Failed to fetch key:", e);
+    return null;
+  }
+}
+
+function showDecryptionError() {
+  document.body.style.display = 'block';
+  document.body.innerHTML = `
+    <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #050810; color: #fff; font-family: sans-serif; padding: 20px; box-sizing: border-box;">
+      <div style="max-width: 480px; width: 100%; background: #0b111e; border: 1px solid rgba(255, 75, 75, 0.15); padding: 40px 30px; border-radius: 12px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+        <div style="font-size: 3rem; margin-bottom: 20px;">⚠️</div>
+        <h2 style="margin: 0 0 15px; font-weight: 700; letter-spacing: -0.5px; color: #ff4b4b;">
+          ${lang === 'tr' ? 'ŞİFRE ÇÖZME HATASI' : 'DECRYPTION KEY ERROR'}
+        </h2>
+        <p style="font-size: 0.95rem; color: #94a3b8; line-height: 1.6; margin: 0 0 25px;">
+          ${lang === 'tr' 
+            ? 'Yıkama veritabanı şifre çözme anahtarı alınamadı veya doğrulanamadı. Lütfen Supabase veritabanında "app_config" tablosunun kurulu olduğundan emin olun.' 
+            : 'The wash database decryption key could not be retrieved or verified. Please ensure the "app_config" table is properly configured in Supabase.'}
+        </p>
+        <button onclick="handleLogout()" 
+                style="display: inline-block; width: 100%; background: transparent; border: 1px solid rgba(255,255,255,0.15); color: #94a3b8; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">
+          ${lang === 'tr' ? 'Çıkış Yap' : 'Log Out'}
+        </button>
+      </div>
+    </div>
+  `;
+}
+
 // --- SUPABASE AUTH ---
 async function initSupabase() {
   try {
@@ -536,26 +598,106 @@ async function initSupabase() {
     const { data } = await sbClient.auth.getSession();
     if (data?.session) {
       currentUser = data.session.user;
+      isDemoUser = currentUser && currentUser.email && currentUser.email.toLowerCase().includes('demo');
       await loadSubscription();
+      if (subscriptionStatus !== 'active') {
+        showB2BLicenseBlock();
+        return;
+      }
+      
+      const key = await fetchDecryptionKey();
+      if (!key) {
+        showDecryptionError();
+        return;
+      }
+      
+      const success = await loadData(key);
+      if (!success) {
+        showDecryptionError();
+        return;
+      }
+      
+      applyDefaultPresetOnLoad();
       updateNavAuth(true);
+      document.body.style.display = 'block';
     } else {
       currentUser = null;
+      isDemoUser = false;
       subscriptionStatus = null;
       subscriptionPlan = null;
       updateNavAuth(false);
+      window.location.href = 'login.html';
+      return;
     }
 
-    sbClient.auth.onAuthStateChange(async (_event, session) => {
-      currentUser = session?.user || null;
-      await loadSubscription();
-      updateNavAuth(!!currentUser);
+    sbClient.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT') {
+        window.location.href = 'login.html';
+      } else {
+        currentUser = session?.user || null;
+        isDemoUser = currentUser && currentUser.email && currentUser.email.toLowerCase().includes('demo');
+        await loadSubscription();
+        updateNavAuth(!!currentUser);
+        if (subscriptionStatus !== 'active') {
+          showB2BLicenseBlock();
+        } else {
+          if (!dataLoaded) {
+            const key = await fetchDecryptionKey();
+            if (!key) {
+              showDecryptionError();
+              return;
+            }
+            const success = await loadData(key);
+            if (!success) {
+              showDecryptionError();
+              return;
+            }
+            applyDefaultPresetOnLoad();
+          }
+          document.body.style.display = 'block';
+        }
+      }
     });
   } catch(e) {
     currentUser = null;
+    isDemoUser = false;
     subscriptionStatus = null;
     subscriptionPlan = null;
     updateNavAuth(false);
+    window.location.href = 'login.html';
   }
+}
+
+function showB2BLicenseBlock() {
+  document.body.style.display = 'block';
+  document.body.innerHTML = `
+    <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #050810; color: #fff; font-family: sans-serif; padding: 20px; box-sizing: border-box;">
+      <div style="max-width: 480px; width: 100%; background: #0b111e; border: 1px solid rgba(0, 212, 255, 0.15); padding: 40px 30px; border-radius: 12px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+        <div style="font-size: 3rem; margin-bottom: 20px;">🔒</div>
+        <h2 style="margin: 0 0 15px; font-weight: 700; letter-spacing: -0.5px; color: #00d4ff;">
+          ${lang === 'tr' ? 'LİSANS AKTİVASYONU GEREKLİ' : 'LICENSE ACTIVATION REQUIRED'}
+        </h2>
+        <p style="font-size: 0.95rem; color: #94a3b8; line-height: 1.6; margin: 0 0 25px;">
+          ${lang === 'tr' 
+            ? `Hesabınız başarıyla oluşturuldu (${currentUser.email}). Ancak bu gemi hesabı için henüz aktif bir B2B lisansı tanımlanmamıştır.` 
+            : `Your account has been successfully created (${currentUser.email}). However, an active B2B Vessel License is not yet assigned to this account.`}
+        </p>
+        <p style="font-size: 0.9rem; color: #cbd5e1; line-height: 1.6; margin: 0 0 30px;">
+          ${lang === 'tr'
+            ? 'Lisansınızı aktif etmek ve tam sürüm erişimi sağlamak için lütfen şirket yöneticinizle veya satış birimimizle iletişime geçin:'
+            : 'To activate your license and enable full fleet simulator access, please contact your company administrator or our sales department:'}
+        </p>
+        <a href="mailto:sales@astridats.com?subject=B2B License Activation Request - ${currentUser.email}" 
+           style="display: inline-block; width: 100%; background: #00d4ff; color: #050810; padding: 12px 20px; border-radius: 6px; font-weight: 700; text-decoration: none; font-size: 0.9rem; box-sizing: border-box;">
+          sales@astridats.com
+        </a>
+        <button onclick="handleLogout()" 
+                style="display: inline-block; width: 100%; margin-top: 15px; background: transparent; border: 1px solid rgba(255,255,255,0.15); color: #94a3b8; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">
+          ${lang === 'tr' ? 'Farklı Hesapla Giriş Yap' : 'Log In with Different Account'}
+        </button>
+      </div>
+    </div>
+  `;
 }
 
 function updateNavAuth(loggedIn) {
@@ -673,8 +815,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   initTheme();
   applyLang();
   setupInputListeners();
-  await loadData();
-  applyDefaultPresetOnLoad();
   await initSupabase();
 });
 
@@ -717,23 +857,66 @@ function toggleTheme() {
 }
 
 // ---- DATA LOADING ----
-async function loadData() {
+function rc4(key, str) {
+  let s = [], i, J = 0, res = '';
+  for (i = 0; i < 256; i++) {
+    s[i] = i;
+  }
+  for (i = 0; i < 256; i++) {
+    J = (J + s[i] + key.charCodeAt(i % key.length)) % 256;
+    let temp = s[i];
+    s[i] = s[J];
+    s[J] = temp;
+  }
+  i = 0;
+  J = 0;
+  for (let y = 0; y < str.length; y++) {
+    i = (i + 1) % 256;
+    J = (J + s[i]) % 256;
+    let temp = s[i];
+    s[i] = s[J];
+    s[J] = temp;
+    res += String.fromCharCode(str.charCodeAt(y) ^ s[(s[i] + s[J]) % 256]);
+  }
+  return res;
+}
+
+async function loadData(decryptionKey) {
   try {
     namesData = window.ATS_CARGO_INDEX || {};
     const [matrixRes, procsRes] = await Promise.all([
-      fetch('data/matrix_lookup.json'),
-      fetch('data/procedures.json')
+      fetch('data/matrix_lookup.enc'),
+      fetch('data/procedures.enc')
     ]);
-    matrixData = await matrixRes.json();
-    proceduresData = await procsRes.json();
+    if (!matrixRes.ok || !procsRes.ok) {
+      throw new Error("Failed to fetch encrypted database files");
+    }
+    const matrixBase64 = await matrixRes.text();
+    const procsBase64 = await procsRes.text();
+    
+    // Decrypt matrix_lookup
+    const matrixBinary = atob(matrixBase64.trim());
+    const matrixDecryptedBinary = rc4(decryptionKey, matrixBinary);
+    const matrixJson = decodeURIComponent(escape(matrixDecryptedBinary));
+    matrixData = JSON.parse(matrixJson);
+    
+    // Decrypt procedures
+    const procsBinary = atob(procsBase64.trim());
+    const procsDecryptedBinary = rc4(decryptionKey, procsBinary);
+    const procsJson = decodeURIComponent(escape(procsDecryptedBinary));
+    proceduresData = JSON.parse(procsJson);
+
     namesArray = Object.values(namesData).sort((a,b) => {
       return (a.display || a.name || '').localeCompare(b.display || b.name || '');
     });
     buildCargoSearchIndex();
     populateCargoDatalist();
     dataLoaded = true;
+    return true;
   } catch(err) {
+    console.error("Data decryption failed:", err);
     showError(T[lang].err_loading);
+    return false;
   }
 }
 
@@ -951,19 +1134,26 @@ function applyVesselPreset() {
   }
   customFields.classList.add('hidden');
   
+  const targetRows = isDemoUser ? 4 : 9;
+  if (isDemoUser) {
+    showError(lang === 'tr' ? 'Demo hesapları maksimum 4 hold ile sınırlandırılmıştır.' : 'Demo accounts are capped at a maximum of 4 holds.');
+  } else {
+    hideError();
+  }
+
   if (preset === 'preset-18') {
-    vesselLayout.rows = 9;
+    vesselLayout.rows = targetRows;
     vesselLayout.preset = 'preset-18';
     vesselLayout.rowsData = [];
-    for (let r = 1; r <= 9; r++) {
+    for (let r = 1; r <= targetRows; r++) {
       vesselLayout.rowsData.push({ row: r, P: true, C: false, S: true });
     }
   } else if (preset === 'preset-26') {
-    vesselLayout.rows = 9;
+    vesselLayout.rows = targetRows;
     vesselLayout.preset = 'preset-26';
     vesselLayout.rowsData = [];
-    for (let r = 1; r <= 9; r++) {
-      const hasC = (r !== 1 && r !== 9);
+    for (let r = 1; r <= targetRows; r++) {
+      const hasC = (r !== 1 && r !== targetRows);
       vesselLayout.rowsData.push({ row: r, P: true, C: hasC, S: true });
     }
   }
@@ -1001,8 +1191,16 @@ function onCustomRowsChange() {
   if (!rowsInput) return;
   let numRows = parseInt(rowsInput.value) || 6;
   if (numRows < 1) numRows = 1;
-  if (numRows > 16) numRows = 16;
-  rowsInput.value = numRows;
+  if (isDemoUser && numRows > 4) {
+    numRows = 4;
+    showError(lang === 'tr' ? 'Demo hesapları maksimum 4 hold ile sınırlandırılmıştır.' : 'Demo accounts are capped at a maximum of 4 holds.');
+    rowsInput.value = 4;
+  } else if (numRows > 16) {
+    numRows = 16;
+    rowsInput.value = 16;
+  } else {
+    hideError();
+  }
   
   vesselLayout.rows = numRows;
   vesselLayout.preset = 'custom';
@@ -1083,6 +1281,7 @@ function rebuildVesselFromConfigs() {
         id: id,
         capacity: isSlop ? 500 : 1200,
         coating: 'epoxy',
+        lineCoating: 'stainless',
         lastCargoId: null,
         lastCargoName: '',
         nextCargoId: null,
@@ -1097,6 +1296,7 @@ function rebuildVesselFromConfigs() {
         id: id,
         capacity: isSlop ? 600 : 1500,
         coating: 'zinc',
+        lineCoating: 'stainless',
         lastCargoId: null,
         lastCargoName: '',
         nextCargoId: null,
@@ -1111,6 +1311,7 @@ function rebuildVesselFromConfigs() {
         id: id,
         capacity: isSlop ? 500 : 1200,
         coating: 'epoxy',
+        lineCoating: 'stainless',
         lastCargoId: null,
         lastCargoName: '',
         nextCargoId: null,
@@ -1331,6 +1532,7 @@ function openTankModal(tankId) {
   
   document.getElementById('editor-tank-name').textContent = displayName;
   document.getElementById('editor-coating').value = tank.coating;
+  document.getElementById('editor-line-coating').value = tank.lineCoating || 'stainless';
   document.getElementById('editor-capacity').value = tank.capacity;
   
   const lastInput = document.getElementById('editor-input-last');
@@ -1376,6 +1578,7 @@ function saveTankConfig() {
   if (!tank) return;
   
   tank.coating = document.getElementById('editor-coating').value;
+  tank.lineCoating = document.getElementById('editor-line-coating').value;
   tank.capacity = parseInt(document.getElementById('editor-capacity').value) || 1000;
   
   const lastInput = document.getElementById('editor-input-last');
@@ -1466,11 +1669,21 @@ function checkFleetReactivity() {
     if (tank.nextCargoId) {
       const tempKey = `${tank.lastCargoId}_${tank.nextCargoId}`;
       const code = matrixData[tempKey] || '';
+      
       const coatingWarns = checkSingleTankCoating(tank.coating, code);
       coatingWarns.forEach(w => {
         warnings.push({
           type: w.type,
           msg: `⚠️ TANK ${id} COATING CONFLICT: ${w.msg}`
+        });
+        document.getElementById(`card-${id}`)?.classList.add('alert-active');
+      });
+
+      const lineWarns = checkSingleLineCoating(tank.lineCoating || 'stainless', code);
+      lineWarns.forEach(w => {
+        warnings.push({
+          type: w.type,
+          msg: `⚠️ TANK ${id} LINE CONFLICT: ${w.msg}`
         });
         document.getElementById(`card-${id}`)?.classList.add('alert-active');
       });
@@ -1554,6 +1767,24 @@ function checkSingleTankCoating(tankCoating, protocolCode) {
       warnings.push({ type: 'danger', msg: lang === 'tr' ? tankRules.danger_msg_tr : tankRules.danger_msg_en });
     } else if (isCaution || isCautionKw) {
       warnings.push({ type: 'caution', msg: lang === 'tr' ? tankRules.caution_msg_tr : tankRules.caution_msg_en });
+    }
+  }
+  return warnings;
+}
+
+function checkSingleLineCoating(lineCoating, protocolCode) {
+  const warnings = [];
+  const lineRules = coatingRules.line[lineCoating];
+  if (lineRules) {
+    const isDanger = lineRules.danger && lineRules.danger.includes(protocolCode);
+    const isCaution = lineRules.caution && lineRules.caution.includes(protocolCode);
+    const isDangerKw = lineRules.danger_keywords && lineRules.danger_keywords.some(kw => protocolCode.includes(kw));
+    const isCautionKw = lineRules.caution_keywords && lineRules.caution_keywords.some(kw => protocolCode.includes(kw));
+
+    if (isDanger || isDangerKw) {
+      warnings.push({ type: 'danger', msg: lang === 'tr' ? lineRules.danger_msg_tr : lineRules.danger_msg_en });
+    } else if (isCaution || isCautionKw) {
+      warnings.push({ type: 'caution', msg: lang === 'tr' ? lineRules.caution_msg_tr : lineRules.caution_msg_en });
     }
   }
   return warnings;
@@ -1694,6 +1925,10 @@ function calculateFleetProtocols() {
   const certContainer = document.getElementById('wwt-certificates-container');
   if (certContainer) certContainer.innerHTML = '';
   
+  function isAllowedDemoCargo(cargoId) {
+    return ['1', '3', '8', '15', '24'].includes(String(cargoId));
+  }
+
   tankIds.forEach(id => {
     const tank = vesselTanks[id];
     if (!tank.lastCargoId || !tank.nextCargoId) return;
@@ -1702,11 +1937,45 @@ function calculateFleetProtocols() {
     const protocolCode = matrixData[key];
     if (!protocolCode || protocolCode === 'nan' || protocolCode === 'ATS-PROT-nan') return;
     
-    const proc = proceduresData[protocolCode];
+    let proc = proceduresData[protocolCode];
     if (!proc) return;
     
+    let isMasked = false;
+    if (isDemoUser) {
+      if (!isAllowedDemoCargo(tank.lastCargoId) || !isAllowedDemoCargo(tank.nextCargoId)) {
+        isMasked = true;
+      }
+    }
+    
+    if (isMasked) {
+      proc = {
+        ...proc,
+        instructions: lang === 'tr'
+          ? "ADIM 1: [🔒 DEMO SÜRÜMÜ — LİSANS AKTİVASYONU GEREKLİ]\nBu yıkama prosedürü gizlenmiştir. Demo sürümünde, yalnızca seçili demo yükleri için tam prosedürleri görüntüleyebilirsiniz: Aseton, Asetik Asit, Akrilonitril, Aminoetiletanolamin, Benzen.\nTüm veritabanına ve 168.000+ kombinasyona erişmek için lütfen sales@astridats.com üzerinden lisansınızı aktif edin."
+          : "STEP 1: [🔒 DEMO VERSION — LICENSE ACTIVATION REQUIRED]\nThis wash procedure is masked. In the demo version, you can only view complete wash procedures for a select subset of demo cargoes: Acetone, Acetic Acid, Acrylonitrile, Aminoethylethanolamine, Benzene.\nTo access the full database and 168,000+ combinations, please activate your license via sales@astridats.com.",
+        safety_note: lang === 'tr'
+          ? "[🔒 DEMO SÜRÜMÜ — LİSANS AKTİVASYONU GEREKLİ] Tüm güvenlik yönergelerini, uyumluluk uyarılarını ve kimyasal özellikleri açmak için lütfen V2.0 PRO tam sürümüne yükseltin."
+          : "[🔒 DEMO VERSION — LICENSE ACTIVATION REQUIRED] Please upgrade to the full V2.0 PRO version to unlock all safety guidelines, compatibility alerts, and chemical specifications."
+      };
+    }
+    
     totalTanksPlanned++;
-    const parsed = parseWashSteps(proc.instructions);
+    let parsed = parseWashSteps(proc.instructions);
+    if (isMasked) {
+      parsed = {
+        fwVolume: 0,
+        swVolume: 0,
+        ambientVolume: 0,
+        warmVolume: 0,
+        hotVolume: 0,
+        warmAvgTemp: 0,
+        hotAvgTemp: 0,
+        warmStepsCount: 0,
+        hotStepsCount: 0,
+        detergentVolume: 0,
+        totalHours: 0
+      };
+    }
     
     const nozzleCount = 2;
     const fwVol = parsed.fwVolume * flowRate * nozzleCount;
@@ -1746,7 +2015,11 @@ function calculateFleetProtocols() {
     
     const wwtPass = tank.wwt.hydrocarbons && tank.wwt.chlorides && tank.wwt.permanganate && tank.wwt.ph;
     if (wwtPass) {
-      appendWWTCard(id, tank);
+      if (isDemoUser && isMasked) {
+        // Do not generate clean certificate for unauthorized cargoes in demo mode
+      } else {
+        appendWWTCard(id, tank);
+      }
     }
   });
   
