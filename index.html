@@ -131,11 +131,17 @@
               </select>
             </div>
 
+            <!-- Include Slop Tanks Toggle -->
+            <div class="field-group" style="margin-top: 10px; display: flex; align-items: center; gap: 8px;">
+              <input type="checkbox" id="vessel-include-slops" onchange="toggleSlopTanks()" style="width: auto; cursor: pointer; margin: 0;">
+              <label for="vessel-include-slops" class="field-label" style="margin-bottom: 0; cursor: pointer; font-size: 0.8rem; font-weight: normal; color: var(--text);" data-translate="lbl_include_slops">Include Aft Slop Tanks (Slop P / Slop S)</label>
+            </div>
+
             <!-- Custom Grid Rows Count -->
             <div class="builder-custom-fields hidden" id="custom-builder-fields" style="margin-top: 15px;">
               <div class="field-group" style="margin-bottom: 12px;">
-                <label class="field-label" data-translate="lbl_total_holds">Total Cargo Holds (Rows: 1-10)</label>
-                <input type="number" id="custom-rows" class="settings-input" value="6" min="1" max="10" onchange="onCustomRowsChange()">
+                <label class="field-label" data-translate="lbl_total_holds">Total Cargo Holds (Rows: 1-16)</label>
+                <input type="number" id="custom-rows" class="settings-input" value="6" min="1" max="16" onchange="onCustomRowsChange()">
               </div>
             </div>
 

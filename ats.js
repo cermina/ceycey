@@ -82,7 +82,8 @@ const T = {
     tab_certs: '📜 CERTIFICATES',
     lbl_vessel_config: 'VESSEL CONFIGURATION & PARAMETERS',
     lbl_presets: 'Vessel Presets',
-    lbl_total_holds: 'Total Cargo Holds (Rows: 1-10)',
+    lbl_total_holds: 'Total Cargo Holds (Rows: 1-16)',
+    lbl_include_slops: 'Include Aft Slop Tanks (Slop P / Slop S)',
     lbl_schematic_builder: 'FLEXIBLE TANK SCHEMATIC BUILDER',
     lbl_schematic_desc: 'Enable/disable Port, Center, or Starboard tanks for each hold row to match your exact Certificate of Fitness.',
     lbl_vessel_metadata: 'VESSEL METADATA',
@@ -157,7 +158,8 @@ const T = {
     tab_certs: '📜 SERTİFİKALAR',
     lbl_vessel_config: 'GEMİ KONFİGÜRASYONU VE PARAMETRELERİ',
     lbl_presets: 'Hazır Gemi Şablonları',
-    lbl_total_holds: 'Toplam Kargo Tankı Sayısı (Sıra: 1-10)',
+    lbl_total_holds: 'Toplam Kargo Tankı Sayısı (Sıra: 1-16)',
+    lbl_include_slops: 'Aft Slop Tanklarını Dahil Et (Slop P / Slop S)',
     lbl_schematic_builder: 'ESNEK TANK ŞABLON OLUŞTURUCU',
     lbl_schematic_desc: 'Geminizin Uygunluk Sertifikasına (CoF) tam uyması için her bir sıra için İskele (P), Merkez (C) veya Sancak (S) tanklarını açın/kapatın.',
     lbl_vessel_metadata: 'GEMİ METADATASI',
@@ -232,7 +234,8 @@ const T = {
     tab_certs: '📜 CERTIFICADOS',
     lbl_vessel_config: 'CONFIGURACIÓN Y PARÁMETROS DEL BUQUE',
     lbl_presets: 'Preajustes del Buque',
-    lbl_total_holds: 'Total de Tanques de Carga (Filas: 1-10)',
+    lbl_total_holds: 'Total de Tanques de Carga (Filas: 1-16)',
+    lbl_include_slops: 'Incluir tanques de decantación de popa (Slop P / Slop S)',
     lbl_schematic_builder: 'CREADOR FLEXIBLE DE ESQUEMA DE TANQUES',
     lbl_schematic_desc: 'Active o desactive los tanques de babor (P), centro (C) o estribor (S) para cada fila a fin de coincidir con su Certificado de Aptitud.',
     lbl_vessel_metadata: 'METADATOS DEL BUQUE',
@@ -307,7 +310,8 @@ const T = {
     tab_certs: '📜 ΠΙΣΤΟΠΟΙΗΤΙΚΑ',
     lbl_vessel_config: 'ΔΙΑΜΟΡΦΩΣΗ & ΠΑΡΑΜΕΤΡΟΙ ΠΛΟΙΟΥ',
     lbl_presets: 'Πρότυπα Πλοίου',
-    lbl_total_holds: 'Σύνολο Δεξαμενών Φορτίου (Σειρές: 1-10)',
+    lbl_total_holds: 'Σύνολο Δεξαμενών Φορτίου (Σειρές: 1-16)',
+    lbl_include_slops: 'Συμπερίληψη Δεξαμενών Slop (Slop P / Slop S)',
     lbl_schematic_builder: 'ΕΥΕΛΙΚΤΟΣ ΣΧΕΔΙΑΣΤΗΣ ΔΕΞΑΜΕΝΩΝ',
     lbl_schematic_desc: 'Ενεργοποιήστε/απενεργοποιήστε τις δεξαμενές αριστερά (P), κέντρο (C) ή δεξιά (S) για κάθε σειρά ώστε να ταιριάζει με το Πιστοποιητικό Καταλληλότητας.',
     lbl_vessel_metadata: 'ΜΕΤΑΔΕΔΟΜΕΝΑ ΠΛΟΙΟΥ',
@@ -382,7 +386,8 @@ const T = {
     tab_certs: '📜 СЕРТИФИКАТЫ',
     lbl_vessel_config: 'КОНФИГУРАЦИЯ И ПАРАМЕТРЫ СУДНА',
     lbl_presets: 'Шаблоны Судов',
-    lbl_total_holds: 'Всего Грузовых Танков (Ряды: 1-10)',
+    lbl_total_holds: 'Всего Грузовых Танков (Ряды: 1-16)',
+    lbl_include_slops: 'Включить кормовые слоп-танки (Slop P / Slop S)',
     lbl_schematic_builder: 'ГИБКИЙ КОНСТРУКТОР ТАНКОВ',
     lbl_schematic_desc: 'Включайте или отключайте Левый (P), Средний (C) или Правый (S) танк для каждого ряда в соответствии с вашим Свидетельством о годности судна (CoF).',
     lbl_vessel_metadata: 'МЕТАДАННЫЕ СУДНА',
@@ -457,7 +462,8 @@ const T = {
     tab_certs: '📜 验舱证书',
     lbl_vessel_config: '船舶配置与参数',
     lbl_presets: '预设船舶类型',
-    lbl_total_holds: '货物舱室总数 (排数: 1-10)',
+    lbl_total_holds: '货物舱室总数 (排数: 1-16)',
+    lbl_include_slops: '包含尾部残油舱 (Slop P / Slop S)',
     lbl_schematic_builder: '灵活舱室图纸定制器',
     lbl_schematic_desc: '为您在每个货舱排中启用或禁用左舷 (P)、中央 (C) 或右舷 (S) 储罐，以匹配您的适装证书 (Certificate of Fitness)。',
     lbl_vessel_metadata: '船舶元数据',
@@ -962,8 +968,32 @@ function applyVesselPreset() {
     }
   }
   
+  // Apply includeSlops if checked
+  const chk = document.getElementById('vessel-include-slops');
+  vesselLayout.includeSlops = chk ? chk.checked : false;
+  updateSlopsInLayout();
+  
   renderRowConfigInputs();
   rebuildVesselFromConfigs();
+}
+
+function toggleSlopTanks() {
+  const chk = document.getElementById('vessel-include-slops');
+  vesselLayout.includeSlops = chk ? chk.checked : false;
+  
+  updateSlopsInLayout();
+  
+  renderRowConfigInputs();
+  rebuildVesselFromConfigs();
+}
+
+function updateSlopsInLayout() {
+  if (!vesselLayout.rowsData) vesselLayout.rowsData = [];
+  vesselLayout.rowsData = vesselLayout.rowsData.filter(r => r.row !== 'Slop');
+  
+  if (vesselLayout.includeSlops) {
+    vesselLayout.rowsData.push({ row: 'Slop', P: true, C: false, S: true, isSlop: true });
+  }
 }
 
 function onCustomRowsChange() {
@@ -971,7 +1001,7 @@ function onCustomRowsChange() {
   if (!rowsInput) return;
   let numRows = parseInt(rowsInput.value) || 6;
   if (numRows < 1) numRows = 1;
-  if (numRows > 10) numRows = 10;
+  if (numRows > 16) numRows = 16;
   rowsInput.value = numRows;
   
   vesselLayout.rows = numRows;
@@ -989,12 +1019,17 @@ function onCustomRowsChange() {
   }
   vesselLayout.rowsData = newRowsData;
   
+  // Re-apply slops if checked
+  const chk = document.getElementById('vessel-include-slops');
+  vesselLayout.includeSlops = chk ? chk.checked : false;
+  updateSlopsInLayout();
+  
   renderRowConfigInputs();
   rebuildVesselFromConfigs();
 }
 
 function toggleRowTank(rowNum, tankType) {
-  const rowData = vesselLayout.rowsData.find(r => r.row === rowNum);
+  const rowData = vesselLayout.rowsData.find(r => String(r.row) === String(rowNum));
   if (rowData) {
     const chk = document.getElementById(`chk-r${rowNum}-${tankType}`);
     rowData[tankType] = chk ? chk.checked : false;
@@ -1016,16 +1051,16 @@ function renderRowConfigInputs() {
     rowEl.className = 'row-config-item';
     
     rowEl.innerHTML = `
-      <span class="row-config-label" style="font-family: var(--mono); font-size: 0.8rem; font-weight: 700; color: var(--text2);">HOLD ${rowData.row}</span>
+      <span class="row-config-label" style="font-family: var(--mono); font-size: 0.8rem; font-weight: 700; color: var(--text2);">${rowData.row === 'Slop' ? 'SLOP TANKS' : 'HOLD ' + rowData.row}</span>
       <div class="row-config-chks" style="display: flex; gap: 15px;">
         <label style="display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 0.75rem; cursor: pointer; color: var(--text);">
-          <input type="checkbox" id="chk-r${rowData.row}-P" ${rowData.P ? 'checked' : ''} onchange="toggleRowTank(${rowData.row}, 'P')"> P
+          <input type="checkbox" id="chk-r${rowData.row}-P" ${rowData.P ? 'checked' : ''} onchange="toggleRowTank('${rowData.row}', 'P')"> P
         </label>
         <label style="display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 0.75rem; cursor: pointer; color: var(--text);">
-          <input type="checkbox" id="chk-r${rowData.row}-C" ${rowData.C ? 'checked' : ''} onchange="toggleRowTank(${rowData.row}, 'C')"> C
+          <input type="checkbox" id="chk-r${rowData.row}-C" ${rowData.C ? 'checked' : ''} onchange="toggleRowTank('${rowData.row}', 'C')"> C
         </label>
         <label style="display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 0.75rem; cursor: pointer; color: var(--text);">
-          <input type="checkbox" id="chk-r${rowData.row}-S" ${rowData.S ? 'checked' : ''} onchange="toggleRowTank(${rowData.row}, 'S')"> S
+          <input type="checkbox" id="chk-r${rowData.row}-S" ${rowData.S ? 'checked' : ''} onchange="toggleRowTank('${rowData.row}', 'S')"> S
         </label>
       </div>
     `;
@@ -1041,11 +1076,12 @@ function rebuildVesselFromConfigs() {
   
   vesselLayout.rowsData.forEach(rowData => {
     const r = rowData.row;
+    const isSlop = (r === 'Slop');
     if (rowData.P) {
-      const id = r + 'P';
+      const id = isSlop ? 'SlopP' : r + 'P';
       vesselTanks[id] = oldTanks[id] || {
         id: id,
-        capacity: 1200,
+        capacity: isSlop ? 500 : 1200,
         coating: 'epoxy',
         lastCargoId: null,
         lastCargoName: '',
@@ -1056,10 +1092,10 @@ function rebuildVesselFromConfigs() {
       };
     }
     if (rowData.C) {
-      const id = r + 'C';
+      const id = isSlop ? 'SlopC' : r + 'C';
       vesselTanks[id] = oldTanks[id] || {
         id: id,
-        capacity: 1500,
+        capacity: isSlop ? 600 : 1500,
         coating: 'zinc',
         lastCargoId: null,
         lastCargoName: '',
@@ -1070,10 +1106,10 @@ function rebuildVesselFromConfigs() {
       };
     }
     if (rowData.S) {
-      const id = r + 'S';
+      const id = isSlop ? 'SlopS' : r + 'S';
       vesselTanks[id] = oldTanks[id] || {
         id: id,
-        capacity: 1200,
+        capacity: isSlop ? 500 : 1200,
         coating: 'epoxy',
         lastCargoId: null,
         lastCargoName: '',
@@ -1125,36 +1161,43 @@ function buildAdjacencyGraph() {
     adjacencyGraph[id] = [];
   });
   
-  const rows = vesselLayout.rows;
-  for (let r = 1; r <= rows; r++) {
-    const rP = r + 'P';
-    const rC = r + 'C';
-    const rS = r + 'S';
+  const rowsData = vesselLayout.rowsData || [];
+  for (let i = 0; i < rowsData.length; i++) {
+    const rowData = rowsData[i];
+    const r = rowData.row;
+    const isSlop = (r === 'Slop');
+    
+    const rP = isSlop ? 'SlopP' : r + 'P';
+    const rC = isSlop ? 'SlopC' : r + 'C';
+    const rS = isSlop ? 'SlopS' : r + 'S';
     
     // Intrarow adjacencies
-    if (vesselTanks[rC]) {
+    if (rowData.C) {
       addAdjacency(rP, rC);
       addAdjacency(rS, rC);
     } else {
       addAdjacency(rP, rS);
     }
     
-    // Interrow adjacencies to row r+1
-    const nextRow = r + 1;
-    if (nextRow <= rows) {
-      const nP = nextRow + 'P';
-      const nC = nextRow + 'C';
-      const nS = nextRow + 'S';
+    // Interrow adjacencies to next row in the layout list
+    if (i + 1 < rowsData.length) {
+      const nextRowData = rowsData[i + 1];
+      const nr = nextRowData.row;
+      const nextIsSlop = (nr === 'Slop');
+      
+      const nP = nextIsSlop ? 'SlopP' : nr + 'P';
+      const nC = nextIsSlop ? 'SlopC' : nr + 'C';
+      const nS = nextIsSlop ? 'SlopS' : nr + 'S';
       
       addAdjacency(rP, nP);
       addAdjacency(rS, nS);
       addAdjacency(rC, nC);
       
-      if (vesselTanks[rC] && !vesselTanks[nC]) {
+      if (rowData.C && !nextRowData.C) {
         addAdjacency(rC, nP);
         addAdjacency(rC, nS);
       }
-      if (!vesselTanks[rC] && vesselTanks[nC]) {
+      if (!rowData.C && nextRowData.C) {
         addAdjacency(rP, nC);
         addAdjacency(rS, nC);
       }
@@ -1248,9 +1291,14 @@ function appendTankCard(parentEl, tankId) {
     indicators += `<span class="ind-wwt-pass" title="WWT Passed" style="color: var(--green);">🧪✓</span>`;
   }
   
+  let displayName = tankId;
+  if (tankId === 'SlopP') displayName = 'Slop P';
+  if (tankId === 'SlopC') displayName = 'Slop C';
+  if (tankId === 'SlopS') displayName = 'Slop S';
+  
   card.innerHTML = `
     <div class="tank-card-top">
-      <span class="tank-name-label">${tankId}</span>
+      <span class="tank-name-label">${displayName}</span>
       <span class="tank-cap-label">${tank.capacity} m³</span>
     </div>
     ${cargoInfo}
@@ -1276,7 +1324,12 @@ function openTankModal(tankId) {
   const tank = vesselTanks[tankId];
   if (!tank) return;
   
-  document.getElementById('editor-tank-name').textContent = tankId;
+  let displayName = tankId;
+  if (tankId === 'SlopP') displayName = 'Slop P';
+  if (tankId === 'SlopC') displayName = 'Slop C';
+  if (tankId === 'SlopS') displayName = 'Slop S';
+  
+  document.getElementById('editor-tank-name').textContent = displayName;
   document.getElementById('editor-coating').value = tank.coating;
   document.getElementById('editor-capacity').value = tank.capacity;
   
@@ -2279,6 +2332,11 @@ function applyDefaultPresetOnLoad() {
         document.getElementById('custom-rows').value = vesselLayout.rows;
       }
       
+      const chkSlops = document.getElementById('vessel-include-slops');
+      if (chkSlops) {
+        chkSlops.checked = !!vesselLayout.includeSlops;
+      }
+      
       // Make sure rowsData exists
       if (!vesselLayout.rowsData) {
         vesselLayout.rowsData = [];
@@ -2288,6 +2346,15 @@ function applyDefaultPresetOnLoad() {
             P: !!vesselTanks[r + 'P'],
             C: !!vesselTanks[r + 'C'],
             S: !!vesselTanks[r + 'S']
+          });
+        }
+        if (vesselLayout.includeSlops) {
+          vesselLayout.rowsData.push({
+            row: 'Slop',
+            P: !!vesselTanks['SlopP'],
+            C: !!vesselTanks['SlopC'],
+            S: !!vesselTanks['SlopS'],
+            isSlop: true
           });
         }
       }
@@ -2306,6 +2373,7 @@ function applyDefaultPresetOnLoad() {
   vesselLayout = {
     rows: 9,
     preset: 'preset-18',
+    includeSlops: false,
     rowsData: []
   };
   for (let r = 1; r <= 9; r++) {
@@ -2313,6 +2381,9 @@ function applyDefaultPresetOnLoad() {
   }
   const selectPreset = document.getElementById('vessel-preset');
   if (selectPreset) selectPreset.value = 'preset-18';
+  
+  const chkSlops = document.getElementById('vessel-include-slops');
+  if (chkSlops) chkSlops.checked = false;
   
   renderRowConfigInputs();
   rebuildVesselFromConfigs();
