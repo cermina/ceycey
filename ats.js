@@ -1272,6 +1272,22 @@ function toggleSlopRowTank(tankType) {
   }
 }
 
+function toggleRowEnabled(rowNum) {
+  const rowData = vesselLayout.rowsData.find(r => String(r.row) === String(rowNum));
+  if (rowData) {
+    const chk = document.getElementById(`chk-row-enable-${rowNum}`);
+    rowData.enabled = chk ? chk.checked : true;
+    
+    // Set preset to custom since we altered the configuration
+    const selectPreset = document.getElementById('vessel-preset');
+    if (selectPreset) selectPreset.value = 'custom';
+    vesselLayout.preset = 'custom';
+    
+    rebuildVesselFromConfigs();
+    renderRowConfigInputs();
+  }
+}
+
 function renderRowConfigInputs() {
   const container = document.getElementById('vessel-row-config-list');
   if (!container) return;
@@ -1283,7 +1299,7 @@ function renderRowConfigInputs() {
   
   const generateSelectOptions = (currentVal) => {
     let html = `<option value="">-</option>`;
-    for (let i = 1; i <= 20; i++) {
+    for (let i = 1; i <= 30; i++) {
       html += `<option value="${i}" ${String(currentVal) === String(i) ? 'selected' : ''}>${i}</option>`;
     }
     return html;
@@ -1309,26 +1325,32 @@ function renderRowConfigInputs() {
         </div>
       `;
     } else {
+      const isEnabled = rowData.enabled !== false;
       rowEl.innerHTML = `
-        <span class="row-config-label" style="font-family: var(--mono); font-size: 0.8rem; font-weight: 700; color: var(--text2);">HOLD ${rowData.row}</span>
-        <div class="row-config-selects" style="display: flex; gap: 10px; align-items: center;">
-          <div style="display: flex; align-items: center; gap: 4px;">
-            <span style="font-family: var(--mono); font-size: 0.7rem; color: var(--text3);">P:</span>
-            <select class="select-input" style="padding: 2px 4px; font-size: 0.75rem; font-family: var(--mono); width: 45px; background: var(--bg2); border: 1px solid var(--border2); color: var(--text); border-radius: 4px;" onchange="changeRowTankNumber('${rowData.row}', 'P_num', this.value)">
-              ${generateSelectOptions(rowData.P_num)}
-            </select>
-          </div>
-          <div style="display: flex; align-items: center; gap: 4px;">
-            <span style="font-family: var(--mono); font-size: 0.7rem; color: var(--text3);">C:</span>
-            <select class="select-input" style="padding: 2px 4px; font-size: 0.75rem; font-family: var(--mono); width: 45px; background: var(--bg2); border: 1px solid var(--border2); color: var(--text); border-radius: 4px;" onchange="changeRowTankNumber('${rowData.row}', 'C_num', this.value)">
-              ${generateSelectOptions(rowData.C_num)}
-            </select>
-          </div>
-          <div style="display: flex; align-items: center; gap: 4px;">
-            <span style="font-family: var(--mono); font-size: 0.7rem; color: var(--text3);">S:</span>
-            <select class="select-input" style="padding: 2px 4px; font-size: 0.75rem; font-family: var(--mono); width: 45px; background: var(--bg2); border: 1px solid var(--border2); color: var(--text); border-radius: 4px;" onchange="changeRowTankNumber('${rowData.row}', 'S_num', this.value)">
-              ${generateSelectOptions(rowData.S_num)}
-            </select>
+        <div style="display: flex; align-items: center; gap: 8px; justify-content: space-between; width: 100%;">
+          <label style="display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 0.75rem; font-weight: 700; color: ${isEnabled ? 'var(--text2)' : 'var(--text3)'}; cursor: pointer; margin: 0;">
+            <input type="checkbox" id="chk-row-enable-${rowData.row}" ${isEnabled ? 'checked' : ''} onchange="toggleRowEnabled('${rowData.row}')" style="margin: 0; cursor: pointer;">
+            HOLD ${rowData.row}
+          </label>
+          <div class="row-config-selects" style="display: flex; gap: 8px; align-items: center; ${isEnabled ? '' : 'opacity: 0.4; pointer-events: none;'}">
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <span style="font-family: var(--mono); font-size: 0.7rem; color: var(--text3);">P:</span>
+              <select class="select-input" style="padding: 2px 4px; font-size: 0.75rem; font-family: var(--mono); width: 45px; background: var(--bg2); border: 1px solid var(--border2); color: var(--text); border-radius: 4px;" onchange="changeRowTankNumber('${rowData.row}', 'P_num', this.value)" ${isEnabled ? '' : 'disabled'}>
+                ${generateSelectOptions(rowData.P_num)}
+              </select>
+            </div>
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <span style="font-family: var(--mono); font-size: 0.7rem; color: var(--text3);">C:</span>
+              <select class="select-input" style="padding: 2px 4px; font-size: 0.75rem; font-family: var(--mono); width: 45px; background: var(--bg2); border: 1px solid var(--border2); color: var(--text); border-radius: 4px;" onchange="changeRowTankNumber('${rowData.row}', 'C_num', this.value)" ${isEnabled ? '' : 'disabled'}>
+                ${generateSelectOptions(rowData.C_num)}
+              </select>
+            </div>
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <span style="font-family: var(--mono); font-size: 0.7rem; color: var(--text3);">S:</span>
+              <select class="select-input" style="padding: 2px 4px; font-size: 0.75rem; font-family: var(--mono); width: 45px; background: var(--bg2); border: 1px solid var(--border2); color: var(--text); border-radius: 4px;" onchange="changeRowTankNumber('${rowData.row}', 'S_num', this.value)" ${isEnabled ? '' : 'disabled'}>
+                ${generateSelectOptions(rowData.S_num)}
+              </select>
+            </div>
           </div>
         </div>
       `;
@@ -1361,17 +1383,19 @@ function rebuildVesselFromConfigs() {
         vesselTanks[id] = oldTanks[id] || createDefaultTankState(id, 500);
       }
     } else {
-      if (rowData.P_num) {
-        const id = rowData.P_num + 'P';
-        vesselTanks[id] = oldTanks[id] || createDefaultTankState(id, 1200);
-      }
-      if (rowData.C_num) {
-        const id = rowData.C_num + 'C';
-        vesselTanks[id] = oldTanks[id] || createDefaultTankState(id, 1500);
-      }
-      if (rowData.S_num) {
-        const id = rowData.S_num + 'S';
-        vesselTanks[id] = oldTanks[id] || createDefaultTankState(id, 1200);
+      if (rowData.enabled !== false) {
+        if (rowData.P_num) {
+          const id = rowData.P_num + 'P';
+          vesselTanks[id] = oldTanks[id] || createDefaultTankState(id, 1200);
+        }
+        if (rowData.C_num) {
+          const id = rowData.C_num + 'C';
+          vesselTanks[id] = oldTanks[id] || createDefaultTankState(id, 1500);
+        }
+        if (rowData.S_num) {
+          const id = rowData.S_num + 'S';
+          vesselTanks[id] = oldTanks[id] || createDefaultTankState(id, 1200);
+        }
       }
     }
   });
@@ -1415,6 +1439,7 @@ function buildAdjacencyGraph() {
   const rowsData = vesselLayout.rowsData || [];
   for (let i = 0; i < rowsData.length; i++) {
     const rowData = rowsData[i];
+    if (rowData.row !== 'Slop' && rowData.enabled === false) continue;
     const isSlop = (rowData.row === 'Slop');
     
     const tP = isSlop ? (rowData.P ? 'SlopP' : null) : (rowData.P_num ? rowData.P_num + 'P' : null);
@@ -1462,6 +1487,7 @@ function renderVesselGrid() {
   if (!vesselLayout.rowsData) return;
   
   vesselLayout.rowsData.forEach(rowData => {
+    if (rowData.row !== 'Slop' && rowData.enabled === false) return;
     const rowEl = document.createElement('div');
     const isSlop = (rowData.row === 'Slop');
     
