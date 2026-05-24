@@ -24,7 +24,8 @@
   --green: #00ff88;
   --green-dim: rgba(0,255,136,0.12);
   --mono: 'Space Mono', monospace;
-  --sans: 'Syne', sans-serif;
+  --sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --display: 'Syne', sans-serif;
   --radius: 4px;
   --radius2: 12px;
 }
@@ -219,7 +220,7 @@ body {
 }
 
 .hero-title {
-  font-family: var(--sans); font-weight: 800;
+  font-family: var(--display); font-weight: 800;
   font-size: clamp(3rem, 10vw, 7rem);
   line-height: 0.9;
   color: var(--text);
@@ -2223,11 +2224,11 @@ body.light-mode .filter-badge.active {
 }
 
 .safety-hero-cards .hero-card-title {
-  font-family: var(--mono);
-  font-size: 0.65rem;
-  letter-spacing: 2px;
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  letter-spacing: 1px;
   font-weight: 700;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   text-transform: uppercase;
 }
 
@@ -2235,6 +2236,11 @@ body.light-mode .filter-badge.active {
   font-size: 0.8rem;
   line-height: 1.5;
   margin-bottom: 12px;
+}
+
+.safety-hero-cards .hero-card-content strong {
+  color: var(--text) !important;
+  font-weight: 700;
 }
 
 /* Standards Pills inside Hero Cards */
@@ -2249,9 +2255,9 @@ body.light-mode .filter-badge.active {
 
 .standard-pill {
   font-family: var(--mono);
-  font-size: 0.58rem;
-  font-weight: 700;
-  padding: 2px 6px;
+  font-size: 0.64rem;
+  font-weight: 500; /* Medium weight, clean and readable on screens */
+  padding: 3px 8px;
   border-radius: 4px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);

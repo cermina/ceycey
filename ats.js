@@ -3757,6 +3757,38 @@ function printTimeSheet(tankId) {
   printContainer.id = 'print-timesheet-container';
   
   const stepLines = translatedInst.split(/\n/).filter(s => s.trim());
+  const stepCount = stepLines.length;
+  
+  // Dynamic scaling variables to guarantee layout fits on a single A4 sheet
+  let containerPadding = '30px';
+  let headerMargin = '20px';
+  let tableMargin = '25px';
+  let tdPadding = '8px 10px';
+  let sigMarginTop = '50px';
+  let sigHeight = '35px';
+  let tableFontSize = '0.8rem';
+  let bodyFontSize = '0.85rem';
+  
+  if (stepCount > 8) {
+    containerPadding = '12px';
+    headerMargin = '8px';
+    tableMargin = '10px';
+    tdPadding = '4px 6px';
+    sigMarginTop = '18px';
+    sigHeight = '20px';
+    tableFontSize = '0.66rem';
+    bodyFontSize = '0.74rem';
+  } else if (stepCount > 5) {
+    containerPadding = '20px';
+    headerMargin = '15px';
+    tableMargin = '18px';
+    tdPadding = '6px 8px';
+    sigMarginTop = '30px';
+    sigHeight = '25px';
+    tableFontSize = '0.74rem';
+    bodyFontSize = '0.8rem';
+  }
+
   const stepsRowsHtml = stepLines.map((stepLine, i) => {
     const cleanLine = stepLine.replace(/^(STEP|ADIM|PASO|ΒΗΜΑ|ШАГ|步骤)\s*\d+:\s*/i, '').trim();
     const numMatch = stepLine.match(/^(STEP|ADIM|PASO|ΒΗΜΑ|ШАГ|步骤)\s*(\d+)/i);
@@ -3767,11 +3799,11 @@ function printTimeSheet(tankId) {
     
     return `
       <tr>
-        <td style="border: 1px solid #222; padding: 10px; font-weight: bold; width: 90px; text-align: center; font-family: monospace;">${stepPrefix} ${stepNum}</td>
-        <td style="border: 1px solid #222; padding: 10px; text-align: left;">${cleanLine}</td>
-        <td style="border: 1px solid #222; padding: 10px; text-align: center; font-family: monospace; width: 110px;">${timeData.commenced || '-'}</td>
-        <td style="border: 1px solid #222; padding: 10px; text-align: center; font-family: monospace; width: 110px;">${timeData.completed || '-'}</td>
-        <td style="border: 1px solid #222; padding: 10px; text-align: left; min-width: 150px;">${timeData.remarks || '-'}</td>
+        <td style="border: 1px solid #222; padding: ${tdPadding}; font-weight: bold; width: 90px; text-align: center; font-family: monospace;">${stepPrefix} ${stepNum}</td>
+        <td style="border: 1px solid #222; padding: ${tdPadding}; text-align: left;">${cleanLine}</td>
+        <td style="border: 1px solid #222; padding: ${tdPadding}; text-align: center; font-family: monospace; width: 110px;">${timeData.commenced || '-'}</td>
+        <td style="border: 1px solid #222; padding: ${tdPadding}; text-align: center; font-family: monospace; width: 110px;">${timeData.completed || '-'}</td>
+        <td style="border: 1px solid #222; padding: ${tdPadding}; text-align: left; min-width: 150px;">${timeData.remarks || '-'}</td>
       </tr>
     `;
   }).join('');
@@ -3793,39 +3825,39 @@ function printTimeSheet(tankId) {
   const inspectorLabel = lang === 'tr' ? 'SURVEYÖR İMZASI' : 'INSPECTOR / SURVEYOR SIGNATURE';
 
   printContainer.innerHTML = `
-    <div style="font-family: Arial, sans-serif; color: #000; padding: 30px; background: #fff; max-width: 800px; margin: 0 auto; line-height: 1.4;">
-      <div style="text-align: center; border-bottom: 3px double #000; padding-bottom: 12px; margin-bottom: 20px;">
-        <h2 style="margin: 0; font-size: 1.4rem; letter-spacing: 1px; font-weight: 800;">${titleText}</h2>
-        <p style="margin: 4px 0 0 0; font-size: 0.8rem; font-weight: bold; color: #555; text-transform: uppercase;">ASTRID ATS v2.0 PRO — TIME LOGGER REPORT</p>
+    <div style="font-family: Arial, sans-serif; color: #000; padding: ${containerPadding}; background: #fff; max-width: 800px; margin: 0 auto; line-height: 1.4; font-size: ${bodyFontSize};">
+      <div style="text-align: center; border-bottom: 3px double #000; padding-bottom: 8px; margin-bottom: ${headerMargin};">
+        <h2 style="margin: 0; font-size: 1.25rem; letter-spacing: 1px; font-weight: 800;">${titleText}</h2>
+        <p style="margin: 3px 0 0 0; font-size: 0.72rem; font-weight: bold; color: #555; text-transform: uppercase;">ASTRID ATS v2.0 PRO — TIME LOGGER REPORT</p>
       </div>
       
-      <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 0.85rem;">
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: ${tableMargin}; font-size: 0.82rem;">
         <tr>
-          <td style="padding: 6px 0; font-weight: bold; width: 140px;">${vesselLabel}</td>
-          <td style="padding: 6px 0; border-bottom: 1px solid #ddd;">${vName.toUpperCase()}</td>
-          <td style="padding: 6px 0; font-weight: bold; width: 100px; padding-left: 20px;">${dateLabel}</td>
-          <td style="padding: 6px 0; border-bottom: 1px solid #ddd; width: 150px;">${dateStr}</td>
+          <td style="padding: 4px 0; font-weight: bold; width: 140px;">${vesselLabel}</td>
+          <td style="padding: 4px 0; border-bottom: 1px solid #ddd;">${vName.toUpperCase()}</td>
+          <td style="padding: 4px 0; font-weight: bold; width: 100px; padding-left: 20px;">${dateLabel}</td>
+          <td style="padding: 4px 0; border-bottom: 1px solid #ddd; width: 150px;">${dateStr}</td>
         </tr>
         <tr>
-          <td style="padding: 6px 0; font-weight: bold;">${imoLabel}</td>
-          <td style="padding: 6px 0; border-bottom: 1px solid #ddd;">${vImo}</td>
-          <td style="padding: 6px 0; font-weight: bold; padding-left: 20px;">${holdLabel}</td>
-          <td style="padding: 6px 0; border-bottom: 1px solid #ddd; font-weight: bold;">TANK ${tankId}</td>
+          <td style="padding: 4px 0; font-weight: bold;">${imoLabel}</td>
+          <td style="padding: 4px 0; border-bottom: 1px solid #ddd;">${vImo}</td>
+          <td style="padding: 4px 0; font-weight: bold; padding-left: 20px;">${holdLabel}</td>
+          <td style="padding: 4px 0; border-bottom: 1px solid #ddd; font-weight: bold;">TANK ${tankId}</td>
         </tr>
         <tr>
-          <td style="padding: 6px 0; font-weight: bold;">${transitionLabel}</td>
-          <td colspan="3" style="padding: 6px 0; border-bottom: 1px solid #ddd;"><strong>${tank.lastCargoName}</strong> ➔ <strong>${tank.nextCargoName}</strong></td>
+          <td style="padding: 4px 0; font-weight: bold;">${transitionLabel}</td>
+          <td colspan="3" style="padding: 4px 0; border-bottom: 1px solid #ddd;"><strong>${tank.lastCargoName}</strong> ➔ <strong>${tank.nextCargoName}</strong></td>
         </tr>
       </table>
 
-      <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-bottom: 40px;">
+      <table style="width: 100%; border-collapse: collapse; font-size: ${tableFontSize}; margin-bottom: ${tableMargin};">
         <thead>
           <tr style="background: #f0f0f0;">
-            <th style="border: 1px solid #222; padding: 10px; text-align: center; font-weight: bold;">${stepCol}</th>
-            <th style="border: 1px solid #222; padding: 10px; text-align: left; font-weight: bold;">${descCol}</th>
-            <th style="border: 1px solid #222; padding: 10px; text-align: center; font-weight: bold;">${startCol}</th>
-            <th style="border: 1px solid #222; padding: 10px; text-align: center; font-weight: bold;">${endCol}</th>
-            <th style="border: 1px solid #222; padding: 10px; text-align: left; font-weight: bold;">${remarksCol}</th>
+            <th style="border: 1px solid #222; padding: ${tdPadding}; text-align: center; font-weight: bold;">${stepCol}</th>
+            <th style="border: 1px solid #222; padding: ${tdPadding}; text-align: left; font-weight: bold;">${descCol}</th>
+            <th style="border: 1px solid #222; padding: ${tdPadding}; text-align: center; font-weight: bold;">${startCol}</th>
+            <th style="border: 1px solid #222; padding: ${tdPadding}; text-align: center; font-weight: bold;">${endCol}</th>
+            <th style="border: 1px solid #222; padding: ${tdPadding}; text-align: left; font-weight: bold;">${remarksCol}</th>
           </tr>
         </thead>
         <tbody>
@@ -3833,16 +3865,16 @@ function printTimeSheet(tankId) {
         </tbody>
       </table>
 
-      <div style="display: flex; justify-content: space-between; margin-top: 60px; font-size: 0.85rem;">
+      <div style="display: flex; justify-content: space-between; margin-top: ${sigMarginTop}; font-size: 0.8rem;">
         <div style="width: 45%; text-align: center;">
-          <div style="height: 40px;"></div>
-          <div style="border-top: 1px solid #000; padding-top: 6px; font-weight: bold;">${officerLabel}</div>
-          <div style="font-size: 0.8rem; margin-top: 4px; color: #333;">${vOff}</div>
+          <div style="height: ${sigHeight};"></div>
+          <div style="border-top: 1px solid #000; padding-top: 4px; font-weight: bold;">${officerLabel}</div>
+          <div style="font-size: 0.75rem; margin-top: 2px; color: #333;">${vOff}</div>
         </div>
         <div style="width: 45%; text-align: center;">
-          <div style="height: 40px;"></div>
-          <div style="border-top: 1px solid #000; padding-top: 6px; font-weight: bold;">${inspectorLabel}</div>
-          <div style="font-size: 0.8rem; margin-top: 4px; color: #777;">Surveyor / Port Inspector</div>
+          <div style="height: ${sigHeight};"></div>
+          <div style="border-top: 1px solid #000; padding-top: 4px; font-weight: bold;">${inspectorLabel}</div>
+          <div style="font-size: 0.75rem; margin-top: 2px; color: #777;">Surveyor / Port Inspector</div>
         </div>
       </div>
     </div>
@@ -3854,6 +3886,10 @@ function printTimeSheet(tankId) {
   style.id = 'print-timesheet-style';
   style.innerHTML = `
     @media print {
+      @page {
+        size: A4 portrait;
+        margin: 5mm;
+      }
       body {
         background: #fff !important;
         color: #000 !important;
@@ -3869,6 +3905,8 @@ function printTimeSheet(tankId) {
         width: 100% !important;
         background: #fff !important;
         color: #000 !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
     }
   `;
