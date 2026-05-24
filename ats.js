@@ -679,6 +679,84 @@ function showDecryptionError() {
   `;
 }
 
+let currentSessionToken = null;
+let sessionIntervalId = null;
+
+async function manageUserSession() {
+  if (!sbClient || !currentUser) return;
+  if (sessionIntervalId) return; // Prevent multiple intervals
+
+  // Retrieve or generate unique token for this session
+  if (!sessionStorage.getItem('ats_session_token')) {
+    const randToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
+    sessionStorage.setItem('ats_session_token', randToken);
+  }
+  currentSessionToken = sessionStorage.getItem('ats_session_token');
+
+  let ipAddress = 'unknown';
+  try {
+    const ipRes = await fetch('https://api.ipify.org?format=json');
+    if (ipRes.ok) {
+      const ipData = await ipRes.json();
+      ipAddress = ipData.ip || 'unknown';
+    }
+  } catch (e) {
+    console.warn("Could not fetch IP:", e);
+  }
+
+  // Upsert session details in database
+  try {
+    await sbClient
+      .from('user_sessions')
+      .upsert({
+        user_email: currentUser.email.toLowerCase(),
+        session_token: currentSessionToken,
+        ip_address: ipAddress,
+        last_activity: new Date().toISOString()
+      });
+  } catch (e) {
+    console.warn("Database user_sessions upsert failed. Please ensure the user_sessions table exists in Supabase.", e);
+  }
+
+  // Set up periodic session check (every 5 seconds)
+  sessionIntervalId = setInterval(async () => {
+    if (!currentUser) {
+      clearInterval(sessionIntervalId);
+      sessionIntervalId = null;
+      return;
+    }
+    try {
+      const { data, error } = await sbClient
+        .from('user_sessions')
+        .select('session_token')
+        .eq('user_email', currentUser.email.toLowerCase())
+        .maybeSingle();
+
+      if (error) {
+        console.warn("Session monitor query error:", error);
+        return;
+      }
+
+      if (data && data.session_token !== currentSessionToken) {
+        clearInterval(sessionIntervalId);
+        sessionIntervalId = null;
+        alert(lang === 'tr'
+          ? 'Oturum Sonlandırıldı: Bu e-posta adresiyle başka bir cihaz veya sekmeden giriş yapıldı.'
+          : 'Session Terminated: This email address has been logged in on another device or browser tab.');
+        handleLogout();
+      } else {
+        // Keep session alive
+        await sbClient
+          .from('user_sessions')
+          .update({ last_activity: new Date().toISOString() })
+          .eq('user_email', currentUser.email.toLowerCase());
+      }
+    } catch (e) {
+      console.warn("Session monitor heartbeat error:", e);
+    }
+  }, 5000);
+}
+
 // --- SUPABASE AUTH ---
 async function initSupabase() {
   try {
@@ -694,6 +772,8 @@ async function initSupabase() {
         showB2BLicenseBlock();
         return;
       }
+      
+      await manageUserSession();
       
       const key = await fetchDecryptionKey();
       if (!key) {
@@ -731,6 +811,7 @@ async function initSupabase() {
         if (subscriptionStatus !== 'active') {
           showB2BLicenseBlock();
         } else {
+          await manageUserSession();
           if (!dataLoaded) {
             const key = await fetchDecryptionKey();
             if (!key) {
@@ -840,6 +921,10 @@ function updateNavAuth(loggedIn) {
 }
 
 async function handleLogout() {
+  if (sessionIntervalId) {
+    clearInterval(sessionIntervalId);
+    sessionIntervalId = null;
+  }
   if (sbClient) await sbClient.auth.signOut().catch(() => {});
   currentUser = null;
   updateNavAuth(false);
